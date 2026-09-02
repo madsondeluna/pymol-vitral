@@ -13,7 +13,7 @@ Ou, se o pacote estiver no PYTHONPATH:
     import pymol_molviz; pymol_molviz.load()
 """
 
-__version__ = "1.1.0"
+__version__ = "1.2.0"
 
 _LOADED = False
 
@@ -26,6 +26,7 @@ def load(auto=True):
     registrar os comandos sem alterar a cena.
     """
     global _LOADED
+    import os
     from pymol import cmd
     from pymol_molviz import core, membrane, protein
 
@@ -34,7 +35,7 @@ def load(auto=True):
     protein.register()
     _LOADED = True
 
-    print("[molviz] v%s carregado." % __version__)
+    print("[molviz] v%s carregado de %s" % (__version__, os.path.dirname(os.path.abspath(__file__))))
     print("[molviz] membrana: preset_memb1..10, memb_color, memb_water")
     print("[molviz] proteina: preset_prot1..10, prot_color, prot_water, "
           "prot_ions")
