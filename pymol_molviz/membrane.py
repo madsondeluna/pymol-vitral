@@ -122,12 +122,17 @@ def _lipid_parts():
         cmd.select("lip_phos", "obj_lipid and name %s" % CG_NAMES["phos"])
         cmd.select("lip_glyc", "obj_lipid and name %s" % CG_NAMES["glyc"])
     else:
-        cmd.select("lip_head",
-                   "obj_lipid and (elem N or (elem C within 3.0 of "
-                   "(obj_lipid and elem N)))")
         cmd.select("lip_phos",
                    "obj_lipid and (elem P or (elem O within 2.0 of "
                    "(obj_lipid and elem P)))")
+        # Cabeca por nitrogenio, que cobre colina e etanolamina, mais o que
+        # estiver distal ao plano do fosfato, que cobre o resto.
+        cmd.select("lip_head",
+                   "obj_lipid and (elem N or (elem C within 3.0 of "
+                   "(obj_lipid and elem N)))")
+        if _mark_distal_head():
+            cmd.select("lip_head", "lip_head or lip_head_geo")
+            cmd.delete("lip_head_geo")
         cmd.select("lip_glyc",
                    "obj_lipid and not (lip_head or lip_phos) and (elem O or "
                    "(elem C within 1.8 of (obj_lipid and elem O and not "
@@ -161,6 +166,58 @@ def _col_moiety():
     cmd.color("mv_glyc", "lip_glyc")
     cmd.color("mv_phos", "lip_phos")
     cmd.color("mv_head", "lip_head")
+
+
+def _mark_distal_head(nome="lip_head_geo"):
+    """Marca os atomos que ficam alem do fosfato DO PROPRIO lipideo.
+
+    A cabeca por nitrogenio so alcanca colina e etanolamina. Fosfatidilglicerol,
+    fosfatidilinositol, fosfatidilserina e cardiolipina nao tem nitrogenio
+    nenhum, e num sistema misto isso deixa a maioria dos lipideos sem cabeca:
+    ela some da figura e o esquema 'moiety' passa a mostrar tres camadas em vez
+    de quatro.
+
+    O que define a cabeca polar nao e a quimica dela, que varia entre especies,
+    e sim a POSICAO: e a parte voltada para o solvente, alem do fosfato.
+
+    A comparacao e por lipideo, e nao contra o z medio do folheto. Medido: com
+    a media do folheto, DPPG ficou com 0,2 atomo de cabeca por molecula, porque
+    as moleculas mais afundadas que a media perdem a cabeca inteira. Cada
+    lipideo tem o seu proprio fosfato como referencia, e nenhum depende de onde
+    os vizinhos estao.
+
+    Assume a normal da membrana em z, a mesma premissa de memb_color leaflet e
+    do preset_memb9. Numa vesicula o criterio nao vale.
+    """
+    cmd.delete(nome)
+    if not has("lip_phos"):
+        return False
+
+    zs = []
+    cmd.iterate_state(1, "lip_phos and elem P", "zs.append(z)", space={"zs": zs})
+    if not zs:
+        return False
+    meio = sum(zs) / float(len(zs))
+
+    # z do fosforo mais externo de cada lipideo. Cardiolipina tem dois, e o
+    # externo e o que define ate onde vai a cauda daquele lado.
+    ref = {}
+    cmd.iterate_state(1, "lip_phos and elem P",
+                      "ref[(model, segi, chain, resi)] = "
+                      "max(ref.get((model, segi, chain, resi), 0.0), abs(z - meio))",
+                      space={"ref": ref, "meio": meio, "max": max, "abs": abs})
+    if not ref:
+        return False
+
+    fora = []
+    cmd.iterate_state(1, "obj_lipid and not lip_phos",
+                      "fora.append(index) if abs(z - meio) > "
+                      "ref.get((model, segi, chain, resi), 1e9) else None",
+                      space={"fora": fora, "ref": ref, "meio": meio, "abs": abs})
+    if not fora:
+        return False
+    cmd.select_list(nome, "obj_lipid", fora, mode="index")
+    return True
 
 
 def _phosphate_midplane():

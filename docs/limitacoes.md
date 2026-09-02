@@ -34,6 +34,25 @@ campo genérico por átomo para gradiente. Os valores originais são salvos no
 costuma carregar pLDDT, cuja escala significa o oposto: vermelho grosso passaria
 a marcar região confiável, não flexível. Confira a origem do arquivo.
 
+**A cabeça do lipídeo é definida por posição, não por química**
+Nitrogênio só existe em colina e etanolamina, então PC e PE são as únicas
+espécies com cabeça detectável quimicamente. Para o resto vale a posição: é
+cabeça o que fica além do fosfato do próprio lipídeo, na direção do solvente.
+A comparação é por molécula e não contra o z médio do folheto, porque com a
+média as moléculas mais afundadas perdem a cabeça inteira.
+
+Dois casos ficam de fora, e nenhum é falha de implementação:
+
+- **Cabeça dobrada.** Se o glicerol da cabeça está voltado para dentro, ele não
+  está além do fosfato e não é marcado. Aparece em estrutura não minimizada.
+- **Cardiolipina.** O glicerol central fica entre os dois fosfatos, portanto
+  mais interno que eles por construção química. Nenhum critério posicional a
+  alcança.
+
+Cobertura medida num sistema misto de 200 lipídeos com seis espécies mais
+cardiolipina: 84 por cento com cabeça marcada, contra 29 por cento pelo
+critério de nitrogênio sozinho.
+
 **A separação de folhetos assume a normal da membrana em z**, usando o centro de
 massa dos fosfatos como plano médio. Em vesícula ou membrana com curvatura
 acentuada o critério não vale.
