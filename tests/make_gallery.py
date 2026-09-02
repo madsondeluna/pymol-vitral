@@ -35,27 +35,44 @@ from pymol_molviz import membrane, protein            # noqa: E402
 SAIDA = os.path.join(RAIZ, "docs", "img")
 LARGURA, ALTURA, DPI = 560, 440, 90
 
+# Folga em angstrom em volta do que se enquadra, por sistema. Sao diferentes
+# porque os dois objetos tem forma diferente: a bicamada e larga e fina e
+# preenche a largura do quadro, entao pede folga maior para nao encostar na
+# borda; a proteina e globular e com a mesma folga sairia pequena demais para
+# se ver detalhe.
+MARGEM_MEMB = 6
+MARGEM_PROT = 3
+
 # (rotulo, giros aplicados sobre a vista de referencia)
 #
-# Na membrana a referencia NAO e o enquadramento do preset. 'orient' alinha o
-# maior eixo do objeto com a horizontal da tela, e uma bicamada e plana em xy:
-# o resultado e a vista de topo, com a rotulada 'lado' mostrando exatamente o
-# contrario do nome. A referencia da membrana e a vista canonica do 'reset',
-# onde z aponta para o observador, e de la os giros sao previsiveis.
+# Os tres angulos sao os mesmos nos dois sistemas: de lado, de cima e a quina.
+#
+# A referencia da MEMBRANA e a vista canonica do 'reset', onde z aponta para o
+# observador e a bicamada aparece de topo. Nao da para usar o enquadramento do
+# preset: '_finish' chama 'orient', que alinha o maior eixo do objeto com a
+# horizontal da tela, e numa bicamada, que e plana em xy, isso devolve a vista
+# de topo com o rotulo 'lado'.
+#
+# A referencia da PROTEINA e o 'orient' que o preset deixou, que e a vista mais
+# informativa de uma molecula globular.
 VISTAS_MEMB = (("lado", [("x", 90)]),
-               ("topo", []),
-               ("obliqua", [("x", 60), ("y", 20)]))
-VISTAS_PROT = (("frente", []),
-               ("lado", [("y", 90)]),
-               ("verso", [("y", 180)]))
+               ("cima", []),
+               ("quina", [("x", 55), ("y", 35)]))
+VISTAS_PROT = (("lado", []),
+               ("cima", [("x", 90)]),
+               ("quina", [("x", 45), ("y", 45)]))
 
 
-def render(modulo, prefixo, indices, vistas, arquivo, obj_zoom,
+def render(modulo, prefixo, indices, vistas, arquivo, obj_zoom, margem,
            reset_camera=False):
     cmd.delete("all")
     cmd.load(arquivo, "sistema")
     modulo.split()
     cmd.set("ray_opaque_background", 1)
+    # Projecao ortografica: em perspectiva um folheto plano parece curvo, e a
+    # comparacao entre as tres vistas deixa de valer porque o que esta mais
+    # perto da camera aparece maior.
+    cmd.set("orthoscopic", 1)
 
     for i in indices:
         fn = getattr(modulo, "preset%d" % i, None)
@@ -69,6 +86,8 @@ def render(modulo, prefixo, indices, vistas, arquivo, obj_zoom,
             continue
 
         fn()
+        # O preset pode religar a perspectiva pelo material.
+        cmd.set("orthoscopic", 1)
         if reset_camera:
             cmd.reset()
         # A vista de referencia e uma so: cada giro parte dela, e nao do giro
@@ -79,7 +98,10 @@ def render(modulo, prefixo, indices, vistas, arquivo, obj_zoom,
             for eixo, ang in giros:
                 cmd.turn(eixo, ang)
             if obj_zoom and cmd.count_atoms(obj_zoom):
-                cmd.zoom(obj_zoom, 2)
+                # complete=1 e o que garante que a geometria INTEIRA caiba:
+                # sem ele o zoom enquadra pelo centro e por um raio aproximado,
+                # e uma bicamada, que e larga e fina, sai cortada nas bordas.
+                cmd.zoom(obj_zoom, margem, complete=1)
             cmd.png(destino, LARGURA, ALTURA, dpi=DPI, ray=1)
             print("OK     %s" % os.path.basename(destino))
 
@@ -90,9 +112,9 @@ if not os.path.isdir(SAIDA):
 pymol_molviz.load(auto=False)
 
 render(protein, "prot", range(1, 11), VISTAS_PROT,
-       os.path.join(RAIZ, "prot", "4hhb.pdb"), "obj_prot")
+       os.path.join(RAIZ, "prot", "4hhb.pdb"), "obj_prot", MARGEM_PROT)
 render(membrane, "memb", range(1, 11), VISTAS_MEMB,
        os.path.join(RAIZ, "memb", "bilbo_preview.pdb"), "obj_lipid",
-       reset_camera=True)
+       MARGEM_MEMB, reset_camera=True)
 
 print("GALERIA COMPLETA")
