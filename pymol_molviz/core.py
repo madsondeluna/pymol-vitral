@@ -109,6 +109,82 @@ def auto_isolevel(map_name, bins=8):
     return min(h[2] + h[3], h[1] * 0.8)   # media + 1 desvio, teto em 80% do max
 
 
+# Caixa unitaria devolvida por get_extent quando o mapa nao tem conteudo.
+_EMPTY_MAP_EXTENT = [[-0.5, -0.5, -0.5], [0.5, 0.5, 0.5]]
+
+# Fator B temporario para a gaussiana ter largura. O valor nao aparece na
+# figura: define a dispersao de cada atomo no mapa, e o nivel sai do histograma
+# do mapa resultante, entao a superficie e a mesma para qualquer B uniforme.
+_MAP_B = 20.0
+
+
+def gaussian_map_empty(map_name):
+    """Mapa sem conteudo, que e o que map_new devolve nos casos tratados
+    abaixo. O PyMOL nao levanta erro aqui: ele aparece so no histograma, como
+    'failed to get map state', que nao diz nada sobre a causa."""
+    try:
+        return cmd.get_extent(map_name) == _EMPTY_MAP_EXTENT
+    except Exception:
+        return True
+
+
+def gaussian_isosurface(surf_name, map_name, selection, grid=1.2,
+                        resolution=3.0, buffer=4, label="molviz"):
+    """Isosuperficie gaussiana sobre uma selecao, com as tres armadilhas do
+    map_new tratadas.
+
+    map_new do tipo gaussian devolve um mapa VAZIO quando todos os fatores B
+    da selecao sao zero, que e exatamente o que um PDB escrito por dinamica
+    molecular traz. A largura da gaussiana de cada atomo sai do fator B; com
+    B zero para todos, nada e depositado na grade. Nem map_new nem isosurface
+    reclamam: o erro aparece adiante, no histograma.
+
+    Os fatores B originais sao restaurados atomo a atomo. lip_tail e wat_o sao
+    selecoes dentro de obj_lipid e obj_wat, e nao objetos proprios, entao
+    escrever na coluna B aqui atinge o objeto que o usuario ve.
+
+    Devolve True se a superficie foi criada.
+    """
+    if not cmd.count_atoms(selection):
+        print("[%s] '%s' nao tem atomos: isosuperficie nao criada." %
+              (label, selection))
+        return False
+
+    b_orig = {}
+    cmd.iterate(selection, "b_orig[(model, index)] = b",
+                space={"b_orig": b_orig})
+    tocar_b = max(b_orig.values()) <= 0.0
+
+    res_orig = cmd.get("gaussian_resolution")
+    try:
+        if tocar_b:
+            cmd.alter(selection, "b = %f" % _MAP_B)
+        cmd.set("gaussian_resolution", float(resolution))
+        cmd.delete(map_name)
+        cmd.map_new(map_name, "gaussian", float(grid), selection, float(buffer))
+    finally:
+        if tocar_b:
+            cmd.alter(selection, "b = b_orig.get((model, index), b)",
+                      space={"b_orig": b_orig})
+        cmd.set("gaussian_resolution", res_orig)
+
+    if gaussian_map_empty(map_name):
+        cmd.delete(map_name)
+        print("[%s] mapa gaussiano de '%s' saiu vazio: isosuperficie nao "
+              "criada." % (label, selection))
+        return False
+
+    cmd.delete(surf_name)
+    cmd.isosurface(surf_name, map_name, auto_isolevel(map_name))
+    cmd.disable(map_name)
+
+    if surf_name not in cmd.get_names("objects"):
+        print("[%s] o nivel nao interceptou o mapa de '%s': nenhum triangulo "
+              "gerado." % (label, selection))
+        return False
+    return True
+
+
 # =============================================================================
 # Material e iluminacao
 # =============================================================================

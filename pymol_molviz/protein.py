@@ -144,12 +144,18 @@ def _col_ss():
 
 
 def _col_chain():
+    # get_chains devolve [''] quando o arquivo nao traz identificador de
+    # cadeia, o que e comum em saida de dinamica molecular. 'chain ' sem
+    # argumento e selecao malformada, entao a cadeia vazia vai entre aspas.
     chains = cmd.get_chains("obj_prot")
     for i, ch in enumerate(chains):
         cmd.color(core.CHAIN_CYCLE[i % len(core.CHAIN_CYCLE)],
-                  "obj_prot and chain %s" % ch)
-    if chains:
-        print("[prot] cadeias: %s" % ", ".join(chains))
+                  "obj_prot and chain '%s'" % ch)
+    nomeadas = [c for c in chains if c.strip()]
+    if nomeadas:
+        print("[prot] cadeias: %s" % ", ".join(nomeadas))
+    elif chains:
+        print("[prot] o arquivo nao traz identificador de cadeia: uma cor so.")
 
 
 def _col_charge():
@@ -237,10 +243,14 @@ def water(mode="shell", radius=4.0, transparency=0.62):
     """
     for obj in ("surf_wat", "map_wat", "wat_shell"):
         cmd.delete(obj)
+
+    # A checagem vem antes do hide: sem agua na estrutura o objeto nao existe,
+    # e hide sobre nome inexistente levanta 'Invalid selection name'.
+    if not has("obj_wat"):
+        return
     for rep in ("surface", "spheres", "sticks", "lines", "nonbonded"):
         cmd.hide(rep, "obj_wat")
-
-    if mode == "off" or not has("obj_wat"):
+    if mode == "off":
         return
 
     if mode == "shell":
@@ -276,12 +286,13 @@ def water(mode="shell", radius=4.0, transparency=0.62):
         cmd.deselect()
     elif mode == "field":
         cmd.select("wat_o", "obj_wat and (elem O or name W+PW+OW)")
-        cmd.set("gaussian_resolution", 4.0)
-        cmd.map_new("map_wat", "gaussian", 1.5, "wat_o", 4)
-        cmd.isosurface("surf_wat", "map_wat", core.auto_isolevel("map_wat"))
+        if not core.gaussian_isosurface("surf_wat", "map_wat", "wat_o",
+                                        grid=1.5, resolution=4.0,
+                                        label="prot"):
+            cmd.deselect()
+            return
         cmd.color("mv_water", "surf_wat")
         cmd.set("transparency", float(transparency), "surf_wat")
-        cmd.disable("map_wat")
         cmd.deselect()
     else:
         print("[prot] modos: off, shell, spheres, surface, field")
@@ -298,10 +309,11 @@ def ions(mode="spheres", radius=6.0):
     """
     cmd.delete("obj_ions_halo")
     cmd.delete("ions_shell")
+    if not has("obj_ions"):
+        return
     for rep in ("spheres", "mesh", "nonbonded", "surface"):
         cmd.hide(rep, "obj_ions")
-
-    if mode == "off" or not has("obj_ions"):
+    if mode == "off":
         return
 
     if mode == "shell":

@@ -226,10 +226,14 @@ def water(mode="surface", transparency=0.62, radius=3.3):
     """
     cmd.delete("surf_wat")
     cmd.delete("map_wat")
+
+    # A checagem vem antes do hide: sem agua na estrutura o objeto nao existe,
+    # e hide sobre nome inexistente levanta 'Invalid selection name'.
+    if not has("obj_wat"):
+        return
     for rep in ("surface", "spheres", "sticks", "lines", "nonbonded"):
         cmd.hide(rep, "obj_wat")
-
-    if mode == "off" or not has("obj_wat"):
+    if mode == "off":
         return
 
     if mode == "surface":
@@ -245,12 +249,12 @@ def water(mode="surface", transparency=0.62, radius=3.3):
         cmd.set("sphere_transparency", 0.75, "obj_wat")
         cmd.color("mv_water", "obj_wat")
     elif mode == "field":
-        cmd.set("gaussian_resolution", 4.0)
-        cmd.map_new("map_wat", "gaussian", 1.5, "wat_o", 4)
-        cmd.isosurface("surf_wat", "map_wat", core.auto_isolevel("map_wat"))
+        if not core.gaussian_isosurface("surf_wat", "map_wat", "wat_o",
+                                        grid=1.5, resolution=4.0,
+                                        label="membrane"):
+            return
         cmd.color("mv_water", "surf_wat")
         cmd.set("transparency", float(transparency), "surf_wat")
-        cmd.disable("map_wat")
     else:
         print("[membrane] modos: off, surface, spheres, field")
         return
@@ -442,11 +446,16 @@ def preset5():
     if not prepare():
         return
     _reset()
-    cmd.set("gaussian_resolution", 3.0)
-    cmd.map_new("map_tail", "gaussian", 1.2, "lip_tail", 4)
-    cmd.isosurface("surf_tail", "map_tail", core.auto_isolevel("map_tail"))
-    cmd.color("mv_tail_a", "surf_tail")
-    cmd.disable("map_tail")
+    if core.gaussian_isosurface("surf_tail", "map_tail", "lip_tail",
+                                grid=1.2, resolution=3.0, label="membrane"):
+        cmd.color("mv_tail_a", "surf_tail")
+    else:
+        # Sem a isosuperficie o preset perderia as caudas por inteiro. Sticks
+        # finos mantem a cena legivel e dizem no log que o caminho foi outro.
+        cmd.show("sticks", "lip_tail")
+        cmd.set("stick_radius", 0.14, "obj_lipid")
+        cmd.color("mv_tail_a", "lip_tail")
+        print("[membrane] preset_memb5: caudas em sticks, sem isosuperficie.")
 
     cmd.show("spheres", "lip_head")
     cmd.show("spheres", "lip_phos")
