@@ -13,7 +13,7 @@ Ou, se o pacote estiver no PYTHONPATH:
     import pymol_molviz; pymol_molviz.load()
 """
 
-__version__ = "1.2.0"
+__version__ = "1.3.0"
 
 _LOADED = False
 

@@ -85,6 +85,30 @@ O mais provável não é ausência de água, mas imagem periódica: a proteína 
 numa borda da caixa e as águas vizinhas estão do outro lado. Corrija fora do
 PyMOL, com `gmx trjconv -pbc mol -center`, antes de carregar.
 
+**Carbono virou cálcio, oxigênio virou oganessônio**
+O PDB não traz as colunas 77-78, onde mora o elemento, então o PyMOL adivinha
+pelo nome do átomo, por prefixo de duas letras: `CA` vira cálcio, `CD` vira
+cádmio, `OG` vira oganessônio, `SO` vira um símbolo que não existe. São nomes
+normais de átomo em campo de força, então isso atinge qualquer saída de
+dinâmica molecular escrita sem esse campo.
+
+O estrago não é cosmético. O raio de van der Waals passa a ser o do elemento
+errado, e com ele mudam spacefill, superfície e o mapa gaussiano; as seleções
+por `elem C` e `elem O` que definem as camadas do lipídeo perdem esses átomos;
+e a cor por elemento sai trocada. O `split` corrige na entrada e diz quantos
+átomos ajustou. Fora dele, `mv_fix_elements` faz o mesmo em qualquer seleção.
+
+**Cardiolipina classificada como cloreto**
+`CL` é ao mesmo tempo o resname do cloreto e o da cardiolipina em CHARMM. Uma
+lista de resíduos de íon que contenha `CL` manda as cardiolipinas inteiras para
+`obj_ions`: num sistema real isso foram 28 moléculas, 6748 átomos, que sumiram
+da membrana e viraram esferas de íon.
+
+A propriedade que separa os dois é a contagem: íon é monoatômico, cardiolipina
+tem 241 átomos por resíduo. O `split` mede isso antes de classificar e avisa no
+log quando descarta um homônimo. A mesma armadilha vale para `CA`, `MG` e `ZN`
+como nome de resíduo.
+
 **Manchas pretas na superfície da proteína**
 Oclusão ambiente saturada. `ambient_occlusion_scale` é a distância de
 amostragem em angstrom, e o padrão 25 do PyMOL vale para esfera: as cavidades

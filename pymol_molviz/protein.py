@@ -64,8 +64,12 @@ def split(keep_source=0, dss=1):
         return
 
     src = " or ".join(sources)
+    # Antes de qualquer selecao por elemento: um PDB sem as colunas 77-78 faz
+    # o PyMOL adivinhar o elemento pelo nome, e CA vira calcio.
+    core.fix_elements(src)
+
     cmd.select("_wat", "(%s) and resn %s" % (src, core.WATER_RESN))
-    cmd.select("_ions", "(%s) and resn %s" % (src, core.ION_RESN))
+    cmd.select("_ions", core.ion_selection(src))
     cmd.select("_prot", "(%s) and polymer.protein" % src)
     cmd.select("_nucl", "(%s) and polymer.nucleic" % src)
     cmd.select("_lig",

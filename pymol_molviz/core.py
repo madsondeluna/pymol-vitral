@@ -65,6 +65,131 @@ def truthy(v):
     return bool(v)
 
 
+# Elementos que um sistema biomolecular realmente contem. O que cair fora
+# disto veio de inferencia errada, nao do sistema.
+BIO_ELEM = ("H", "C", "N", "O", "P", "S", "Se", "F",
+            "Na", "Cl", "K", "Mg", "Ca", "Zn", "Fe", "Mn", "Cu", "Br", "I")
+
+# Raio de van der Waals por elemento. O alter de 'elem' NAO reatribui o raio:
+# o PyMOL o define no load, entao corrigir so o elemento deixaria a esfera com
+# o tamanho errado.
+VDW = {"H": 1.20, "C": 1.70, "N": 1.55, "O": 1.52, "P": 1.80, "S": 1.80,
+       "Se": 1.90, "F": 1.47, "Cl": 1.75, "Br": 1.85, "I": 1.98,
+       "Na": 2.27, "K": 2.75, "Mg": 1.73, "Ca": 2.31, "Zn": 1.39,
+       "Fe": 1.94, "Mn": 1.97, "Cu": 1.40}
+
+# Residuo de ion: o elemento vem do nome do residuo, e nao do nome do atomo.
+# Sem isto um ion CL viraria carbono pela regra da primeira letra.
+ION_ELEM = {"NA": "Na", "SOD": "Na", "CL": "Cl", "CLA": "Cl", "K": "K",
+            "POT": "K", "MG": "Mg", "CA": "Ca", "CAL": "Ca", "ZN": "Zn",
+            "FE": "Fe", "MN": "Mn", "CU": "Cu"}
+
+
+def _elem_from_name(name, resn, monoatomico=True):
+    """Elemento a partir do nome do atomo, a convencao dos campos de forca.
+
+    O nome do residuo so decide quando o residuo tem um atomo so. 'CL' e ao
+    mesmo tempo o cloreto e o resname da cardiolipina, e tratar a segunda como
+    ion transforma 241 atomos de lipideo em cloro.
+    """
+    r = resn.strip().upper()
+    if monoatomico and r in ION_ELEM:
+        return ION_ELEM[r]
+    n = name.strip().lstrip("0123456789")
+    return n[0].upper() if n else "C"
+
+
+def poliatomicos(sel, resns):
+    """Dos resns dados, os que tem mais de um atomo por residuo em 'sel'.
+
+    Um ion e monoatomico. Um resname da lista de ions com dezenas de atomos por
+    residuo e outra molecula com o mesmo nome, e a colisao que aparece na
+    pratica e CL: cloreto e cardiolipina.
+    """
+    fora = []
+    # ION_RESN traz 'NA++CL-', entao o split devolve entradas vazias: os nomes
+    # com carga carregam o mesmo caractere que separa a lista.
+    for resn in [r for r in resns.split("+") if r]:
+        alvo = "(%s) and resn %s" % (sel, resn)
+        n_at = cmd.count_atoms(alvo)
+        if not n_at:
+            continue
+        ids = set()
+        cmd.iterate(alvo, "ids.add((model, segi, chain, resi))",
+                    space={"ids": ids})
+        if ids and n_at / float(len(ids)) > 1.0:
+            fora.append((resn, n_at, len(ids)))
+    return fora
+
+
+def ion_selection(src, quiet=0):
+    """Selecao de ions, descartando resname homonimo de molecula poliatomica."""
+    fora = poliatomicos(src, ION_RESN)
+    sel = "(%s) and resn %s" % (src, ION_RESN)
+    if fora:
+        sel += " and not resn %s" % "+".join(f[0] for f in fora)
+        if not truthy(quiet):
+            for resn, n_at, n_res in fora:
+                print("[molviz] '%s' tem %.0f atomos por residuo: nao e ion, "
+                      "%d moleculas tratadas como lipideo."
+                      % (resn, n_at / float(n_res), n_res))
+    return sel
+
+
+def fix_elements(sel="all", quiet=0):
+    """Corrige elementos inferidos errado a partir do nome do atomo.
+
+    Um PDB sem as colunas 77-78 deixa o PyMOL adivinhar o elemento pelo nome, e
+    ele adivinha por prefixo de duas letras: CA vira calcio, CD vira cadmio, OG
+    vira oganesson, SO vira um simbolo que nao existe. Sao nomes normais de
+    atomo em campo de forca, entao o erro atinge qualquer saida de dinamica
+    molecular escrita sem esse campo.
+
+    O estrago nao e cosmetico. O raio de van der Waals passa a ser o do
+    elemento errado, e com ele mudam spacefill, superficie e o mapa gaussiano;
+    as selecoes por 'elem C' e 'elem O' que definem as camadas do lipideo
+    perdem esses atomos; e a cor por elemento sai trocada.
+
+    Devolve quantos atomos foram corrigidos.
+    """
+    simbolos = set()
+    cmd.iterate(sel, "simbolos.add(elem)", space={"simbolos": simbolos})
+
+    # Simbolo que nao existe num sistema biomolecular: erro certo.
+    suspeitos = sorted(e for e in simbolos if e and e not in BIO_ELEM)
+    alvos = ["elem %s" % e for e in suspeitos]
+
+    # Simbolo de ion que aparece FORA de um residuo de ion: 'CA' e o caso que
+    # importa, porque e ao mesmo tempo calcio e o nome do carbono alfa, e o
+    # mesmo vale para CD, MG e ZN em campo de forca. O elemento sozinho nao
+    # decide; o residuo decide.
+    metais = sorted(set(ION_ELEM.values()) & simbolos)
+    if metais:
+        alvos.append("((%s) and not resn %s)"
+                     % (" or ".join("elem %s" % e for e in metais), ION_RESN))
+        suspeitos += [e for e in metais if e not in suspeitos]
+
+    if not alvos:
+        return 0
+
+    alvo = "(%s) and (%s)" % (sel, " or ".join(alvos))
+    n = cmd.count_atoms(alvo)
+    if not n:
+        return 0
+
+    poli = set(f[0] for f in poliatomicos(sel, ION_RESN))
+    cmd.alter(alvo,
+              "elem = _de_nome(name, resn, resn.strip().upper() not in _poli)",
+              space={"_de_nome": _elem_from_name, "_poli": poli})
+    cmd.alter(alvo, "vdw = _vdw.get(elem, 1.70)", space={"_vdw": VDW})
+    cmd.rebuild()
+    if not truthy(quiet):
+        print("[molviz] %d atomos com elemento inferido errado (%s): "
+              "corrigidos pelo nome do atomo."
+              % (n, ", ".join(suspeitos[:6])))
+    return n
+
+
 def reload_package():
     """Recarrega o pacote a partir do disco, sem reabrir o PyMOL.
 
@@ -596,5 +721,6 @@ def register_common():
                      ("mv_desaturate", desaturate), ("mv_paper", paper),
                      ("mv_grayscale", grayscale), ("mv_extent", extent),
                      ("mv_reload", reload_package),
+                     ("mv_fix_elements", fix_elements),
                      ("mv_render", render)):
         cmd.extend(name, fn)
