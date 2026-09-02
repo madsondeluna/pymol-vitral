@@ -253,8 +253,8 @@ colours it could not reach.
 
 ## Gallery
 
-[`docs/gallery.md`](docs/gallery.md) shows all twenty presets in three
-orientations each, rendered from the two systems in this repository, with the
+[`docs/gallery.md`](docs/gallery.md) shows all twenty presets from the side and
+from the top, rendered from the two systems in this repository, with the
 command line under every image.
 
 ```

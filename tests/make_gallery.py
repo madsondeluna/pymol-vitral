@@ -45,7 +45,11 @@ MARGEM_PROT = 3
 
 # (rotulo, giros aplicados sobre a vista de referencia)
 #
-# Os tres angulos sao os mesmos nos dois sistemas: de lado, de cima e a quina.
+# Dois angulos, os mesmos nos dois sistemas: de lado e de cima. A vista de
+# quina saiu do conjunto: nos presets em que a agua entra como superficie ela
+# envolve a bicamada e aparece cortada na borda, porque o enquadramento e feito
+# pelo lipideo e quem e maior e o solvente. Enquadrar pelo que esta visivel
+# resolve o corte e encolhe a bicamada, o que e pior.
 #
 # A referencia da MEMBRANA e a vista canonica do 'reset', onde z aponta para o
 # observador e a bicamada aparece de topo. Nao da para usar o enquadramento do
@@ -56,11 +60,9 @@ MARGEM_PROT = 3
 # A referencia da PROTEINA e o 'orient' que o preset deixou, que e a vista mais
 # informativa de uma molecula globular.
 VISTAS_MEMB = (("lado", [("x", 90)]),
-               ("cima", []),
-               ("quina", [("x", 55), ("y", 35)]))
+               ("cima", []))
 VISTAS_PROT = (("lado", []),
-               ("cima", [("x", 90)]),
-               ("quina", [("x", 45), ("y", 45)]))
+               ("cima", [("x", 90)]))
 
 
 def render(modulo, prefixo, indices, vistas, arquivo, obj_zoom, margem,
