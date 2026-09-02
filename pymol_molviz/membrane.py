@@ -1,0 +1,493 @@
+"""
+pymol_molviz.membrane
+
+Presets de visualizacao para sistemas de membrana.
+
+Divide o sistema em objetos independentes (obj_lipid, obj_wat, obj_ions,
+obj_prot) e aplica combinacoes de representacao de lipideo, ion e solvente.
+"""
+
+from pymol import cmd
+from pymol_molviz import core
+from pymol_molviz.core import has, truthy, n_residues
+
+
+# =============================================================================
+# Nomenclatura
+# Centralizada aqui: adaptar a um force field novo e editar um dicionario, nao
+# varrer o modulo.
+# =============================================================================
+LIPID_RESN = (
+    "POPC+POPE+POPG+POPS+POPA+POPI+DPPC+DPPE+DPPG+DOPC+DOPE+DOPG+"
+    "DLPC+DMPC+CHOL+CHL1+LPS+REMP+RAMP+KDO+LIPA+CDL+CDL2+CARD"
+)
+INNER_LEAFLET_RESN = "POPG+POPS+CDL+CDL2+CARD"
+STEROL_RESN = "CHOL+CHL1"
+
+# Nomes de particula Martini, usados quando o sistema e coarse-grained.
+CG_NAMES = {
+    "head": "NC3+NH3+CNO+GL0+TAP",
+    "phos": "PO4+PO1+PO2+P",
+    "glyc": "GL1+GL2+AM1+AM2",
+}
+
+OBJECTS = ["obj_lipid", "obj_wat", "obj_ions", "obj_prot"]
+
+
+def _is_cg():
+    """Heuristica de coarse-grained pela razao atomos por residuo lipidico.
+
+    Na Martini um POPC tem cerca de 12 particulas; em all-atom sem hidrogenios
+    tem 52. O corte em 25 separa os dois regimes com folga.
+    """
+    n = n_residues("obj_lipid")
+    if n == 0:
+        return False
+    return (cmd.count_atoms("obj_lipid") / float(n)) < 25
+
+
+# =============================================================================
+# Preparacao
+# =============================================================================
+def split(keep_source=0):
+    """Divide o sistema carregado em objetos independentes.
+
+    Objetos, e nao selecoes: e o que da a cada componente sua propria linha no
+    painel, com ponto de enable e botoes A/S/H/L/C.
+
+    Edge case: cmd.create copia todos os estados. Numa trajetoria de milhares
+    de frames isso duplica a memoria inteira; carregue apenas o frame de
+    interesse antes.
+    """
+    sources = core.source_objects(OBJECTS)
+    if not sources:
+        print("[membrane] nada carregado.")
+        return
+
+    src = " or ".join(sources)
+    cmd.select("_wat", "(%s) and resn %s" % (src, core.WATER_RESN))
+    cmd.select("_ions", "(%s) and resn %s" % (src, core.ION_RESN))
+    cmd.select("_prot", "(%s) and polymer.protein" % src)
+    cmd.select("_lipid",
+               "(%s) and not (_wat or _ions or _prot) and not hydro" % src)
+
+    for obj, sel in (("obj_lipid", "_lipid"), ("obj_wat", "_wat"),
+                     ("obj_ions", "_ions"), ("obj_prot", "_prot")):
+        cmd.delete(obj)
+        if has(sel):
+            cmd.create(obj, sel)
+
+    for tmp in ("_wat", "_ions", "_prot", "_lipid"):
+        cmd.delete(tmp)
+
+    # O objeto de origem e desabilitado, nao deletado: se algo der errado nas
+    # copias, ele continua disponivel para recomecar.
+    if not truthy(keep_source):
+        for s in sources:
+            cmd.disable(s)
+
+    _lipid_parts()
+    if has("obj_wat"):
+        cmd.select("wat_o", "obj_wat and (elem O or name W+PW+OW)")
+        cmd.deselect()
+
+    print("[membrane] objetos: %s | coarse-grained: %s"
+          % (", ".join(o for o in OBJECTS if has(o)), _is_cg()))
+
+
+def _lipid_parts():
+    """Camadas quimicas dentro de obj_lipid.
+
+    Definidas por criterio quimico e nao por nome de atomo, porque a
+    nomenclatura varia entre CHARMM, Berger, Slipids e Martini enquanto a
+    topologia nao:
+
+      cabeca   = nitrogenio quaternario ou amina, mais os carbonos vizinhos
+      fosfato  = fosforo, mais os oxigenios ligados
+      glicerol = oxigenios de ester restantes, mais os carbonos adjacentes
+      cauda    = o complemento
+
+    Em coarse-grained nao ha elemento atribuido de forma confiavel, entao cai
+    para os nomes de particula Martini.
+    """
+    if not has("obj_lipid"):
+        return
+
+    if _is_cg():
+        cmd.select("lip_head", "obj_lipid and name %s" % CG_NAMES["head"])
+        cmd.select("lip_phos", "obj_lipid and name %s" % CG_NAMES["phos"])
+        cmd.select("lip_glyc", "obj_lipid and name %s" % CG_NAMES["glyc"])
+    else:
+        cmd.select("lip_head",
+                   "obj_lipid and (elem N or (elem C within 3.0 of "
+                   "(obj_lipid and elem N)))")
+        cmd.select("lip_phos",
+                   "obj_lipid and (elem P or (elem O within 2.0 of "
+                   "(obj_lipid and elem P)))")
+        cmd.select("lip_glyc",
+                   "obj_lipid and not (lip_head or lip_phos) and (elem O or "
+                   "(elem C within 1.8 of (obj_lipid and elem O and not "
+                   "lip_phos)))")
+    cmd.select("lip_tail",
+               "obj_lipid and not (lip_head or lip_phos or lip_glyc)")
+    cmd.deselect()
+
+
+def prepare():
+    core.material()
+    if not has("obj_lipid"):
+        split()
+    return has("obj_lipid")
+
+
+def _reset():
+    for obj in ("map_tail", "surf_tail", "map_wat", "surf_wat",
+                "obj_ions_halo"):
+        cmd.delete(obj)
+    core.clear_reps(OBJECTS)
+
+
+# =============================================================================
+# Cor
+# =============================================================================
+def _col_moiety():
+    cmd.color("mv_tail_a", "obj_lipid")
+    cmd.color("mv_glyc", "lip_glyc")
+    cmd.color("mv_phos", "lip_phos")
+    cmd.color("mv_head", "lip_head")
+
+
+def _col_leaflet():
+    """Folheto superior e inferior.
+
+    Assume a normal da membrana em z e usa o centro de massa dos fosfatos como
+    plano medio. Em vesicula ou membrana com curvatura acentuada o criterio
+    nao vale.
+    """
+    ref = "lip_phos" if has("lip_phos") else "lip_head"
+    if not has(ref):
+        _col_moiety()
+        return
+    zc = cmd.centerofmass(ref)[2]
+    cmd.color("mv_tail_a", "obj_lipid and z > %f" % zc)
+    cmd.color("mv_tail_in", "obj_lipid and z < %f" % zc)
+    cmd.color("mv_head", "lip_head")
+    cmd.color("mv_phos", "lip_phos")
+
+
+def _col_type():
+    """Uma cor por especie lipidica. Para membranas mistas e pan-lipidomas."""
+    if not has("obj_lipid"):
+        return
+    resns = sorted(set(a.resn for a in cmd.get_model("obj_lipid").atom))
+    for i, resn in enumerate(resns):
+        cmd.color(core.TYPE_CYCLE[i % len(core.TYPE_CYCLE)],
+                  "obj_lipid and resn %s" % resn)
+    print("[membrane] especies: %s" % ", ".join(resns))
+
+
+def _col_depth():
+    """Gradiente continuo na normal. Para inspecionar interdigitacao."""
+    cmd.spectrum("z", "blue_white_red", "obj_lipid")
+
+
+COLORS = {"moiety": _col_moiety, "leaflet": _col_leaflet,
+          "type": _col_type, "depth": _col_depth}
+
+
+def color(scheme="moiety"):
+    """Esquema de cor: moiety, leaflet, type, depth."""
+    if scheme not in COLORS:
+        print("[membrane] esquemas: %s" % ", ".join(sorted(COLORS)))
+        return
+    COLORS[scheme]()
+    _color_context()
+    print("[membrane] cor: %s" % scheme)
+
+
+def _color_context():
+    if has("obj_ions"):
+        cmd.color("mv_na", "obj_ions and resn NA+SOD+NA+")
+        cmd.color("mv_cl", "obj_ions and resn CL+CLA+CL-")
+        cmd.color("orange", "obj_ions and resn K+POT")
+        cmd.color("forest", "obj_ions and resn MG")
+        cmd.color("grey60", "obj_ions and resn CA")
+
+
+# =============================================================================
+# Agua e ions
+# =============================================================================
+def water(mode="surface", transparency=0.62, radius=3.3):
+    """Agua: off, surface, spheres, field.
+
+    'surface' infla o raio dos oxigenios e desenha a superficie molecular. E
+    mais previsivel que o mapa gaussiano, que exige calibrar o nivel de
+    isosuperficie.
+    """
+    cmd.delete("surf_wat")
+    cmd.delete("map_wat")
+    for rep in ("surface", "spheres", "sticks", "lines", "nonbonded"):
+        cmd.hide(rep, "obj_wat")
+
+    if mode == "off" or not has("obj_wat"):
+        return
+
+    if mode == "surface":
+        cmd.alter("wat_o", "vdw=%f" % float(radius))
+        cmd.rebuild()      # sem isso o novo raio nao propaga para a geometria
+        cmd.set("solvent_radius", 1.8)
+        cmd.show("surface", "wat_o")
+        cmd.color("mv_water", "obj_wat")
+        cmd.set("transparency", float(transparency), "obj_wat")
+    elif mode == "spheres":
+        cmd.show("spheres", "wat_o")
+        cmd.set("sphere_scale", 0.35, "obj_wat")
+        cmd.set("sphere_transparency", 0.75, "obj_wat")
+        cmd.color("mv_water", "obj_wat")
+    elif mode == "field":
+        cmd.set("gaussian_resolution", 4.0)
+        cmd.map_new("map_wat", "gaussian", 1.5, "wat_o", 4)
+        cmd.isosurface("surf_wat", "map_wat", core.auto_isolevel("map_wat"))
+        cmd.color("mv_water", "surf_wat")
+        cmd.set("transparency", float(transparency), "surf_wat")
+        cmd.disable("map_wat")
+    else:
+        print("[membrane] modos: off, surface, spheres, field")
+        return
+    print("[membrane] agua: %s" % mode)
+
+
+def _ions_spheres(scale=0.5):
+    if not has("obj_ions"):
+        return
+    cmd.show("spheres", "obj_ions")
+    cmd.set("sphere_scale", float(scale), "obj_ions")
+    _color_context()
+
+
+def _ions_vdw():
+    if not has("obj_ions"):
+        return
+    cmd.show("spheres", "obj_ions")
+    cmd.set("sphere_scale", 1.0, "obj_ions")
+    _color_context()
+
+
+def _ions_halo(cor=0.45, shell=2.2, transparency=0.72):
+    """Nucleo opaco com casca translucida, sugerindo a esfera de solvatacao.
+
+    A casca vive num objeto separado porque um mesmo atomo nao pode ter dois
+    raios de esfera simultaneos.
+    """
+    if not has("obj_ions"):
+        return
+    _ions_spheres(cor)
+    cmd.delete("obj_ions_halo")
+    cmd.create("obj_ions_halo", "obj_ions")
+    cmd.show("spheres", "obj_ions_halo")
+    cmd.set("sphere_scale", float(shell), "obj_ions_halo")
+    cmd.set("sphere_transparency", float(transparency), "obj_ions_halo")
+
+
+def _ions_mesh(radius=3.0):
+    """Malha em vez de superficie solida: marca a posicao sem ocultar o que
+    esta atras, util quando o ion esta dentro da bicamada."""
+    if not has("obj_ions"):
+        return
+    cmd.show("spheres", "obj_ions")
+    cmd.set("sphere_scale", 0.35, "obj_ions")
+    cmd.alter("obj_ions", "vdw=%f" % float(radius))
+    cmd.rebuild()
+    cmd.show("mesh", "obj_ions")
+    cmd.set("mesh_width", 0.4, "obj_ions")
+    _color_context()
+
+
+def _ions_dots(scale=0.4):
+    if not has("obj_ions"):
+        return
+    cmd.show("nonbonded", "obj_ions")
+    cmd.show("spheres", "obj_ions")
+    cmd.set("sphere_scale", float(scale), "obj_ions")
+    cmd.set("sphere_transparency", 0.3, "obj_ions")
+    _color_context()
+
+
+def protein():
+    """Peptideo ou proteina embebida, se houver."""
+    if not has("obj_prot"):
+        return
+    cmd.show("cartoon", "obj_prot")
+    cmd.cartoon("oval", "obj_prot and ss S")
+    cmd.cartoon("loop", "obj_prot and not (ss S or ss H)")
+    cmd.color("mv_loop", "obj_prot")
+    cmd.color("mv_helix", "obj_prot and ss H")
+    cmd.color("mv_sheet", "obj_prot and ss S")
+    if not has("obj_prot and (ss H or ss S)"):
+        print("[membrane] aviso: sem estrutura secundaria atribuida. Em "
+              "all-atom rode 'dss'; o PyMOL nao a infere de particulas CG.")
+
+
+def _finish(msg):
+    protein()
+    cmd.rebuild()          # assa a oclusao ambiente na geometria nova
+    cmd.orient("obj_lipid")
+    cmd.zoom("obj_lipid", 3)
+    print("[membrane] %s" % msg)
+
+
+# =============================================================================
+# PRESETS
+# =============================================================================
+def preset1():
+    """Esferas estratificadas.
+
+    Lipideo: esferas com folga (0.55), cor por camada quimica
+    Ions:    esferas opacas medias
+    Agua:    superficie translucida
+
+    O preset de leitura geral. A folga entre esferas preserva a distincao
+    entre cabeca, fosfato, glicerol e cauda, que o spacefill cheio apaga.
+    """
+    if not prepare():
+        return
+    _reset()
+    cmd.show("spheres", "obj_lipid")
+    cmd.set("sphere_scale", 0.55, "obj_lipid")
+    cmd.set("sphere_scale", 0.66, "lip_head")
+    color("moiety")
+    _ions_spheres(0.5)
+    water("surface", 0.62)
+    _finish("preset_memb1: esferas estratificadas")
+
+
+def preset2():
+    """Spacefill solido.
+
+    Lipideo: raio de van der Waals real, cor por folheto
+    Ions:    raio real, coerentes com o lipideo
+    Agua:    superficie muito translucida
+
+    Mostra volume ocupado e empacotamento. A organizacao interna fica
+    invisivel por construcao: o que se ve e a barreira.
+    """
+    if not prepare():
+        return
+    _reset()
+    cmd.show("spheres", "obj_lipid")
+    cmd.set("sphere_scale", 1.0, "obj_lipid")
+    color("leaflet")
+    _ions_vdw()
+    water("surface", 0.78)
+    _finish("preset_memb2: spacefill solido")
+
+
+def preset3():
+    """Licorice com ions destacados.
+
+    Lipideo: sticks de raio alto, cabecas em esfera
+    Ions:    nucleo opaco com casca de solvatacao
+    Agua:    esferas translucidas
+
+    Para figuras sobre interacao ion-cabeca polar. O licorice deixa ver a
+    conformacao das caudas, que o spacefill esconde.
+    """
+    if not prepare():
+        return
+    _reset()
+    cmd.show("sticks", "obj_lipid")
+    cmd.set("stick_radius", 0.30, "obj_lipid")
+    cmd.show("spheres", "lip_head")
+    cmd.set("sphere_scale", 0.45, "obj_lipid")
+    color("moiety")
+    _ions_halo()
+    water("spheres")
+    _finish("preset_memb3: licorice com ions destacados")
+
+
+def preset4():
+    """Bicamada fantasma.
+
+    Lipideo: superficie translucida com licorice fino por dentro
+    Ions:    esferas com malha de raio inflado
+    Agua:    desligada
+
+    O preset para peptideo inserido: preserva o contorno da membrana sem
+    ocultar o que esta dentro. A agua fica desligada de proposito, pois a
+    superficie do solvente esconderia o objeto de interesse.
+    """
+    if not prepare():
+        return
+    _reset()
+    cmd.show("sticks", "obj_lipid")
+    cmd.set("stick_radius", 0.16, "obj_lipid")
+    cmd.show("surface", "obj_lipid")
+    cmd.set("transparency", 0.58, "obj_lipid")
+    color("moiety")
+    _ions_mesh()
+    _finish("preset_memb4: bicamada fantasma")
+
+
+def preset5():
+    """Ilustracao: nucleo hidrofobico continuo.
+
+    Lipideo: caudas como isosuperficie gaussiana, cabecas em esfera
+    Ions:    esferas opacas grandes
+    Agua:    campo continuo
+
+    Reduz milhares de atomos de cauda a uma unica superficie lisa. E o preset
+    mais leve para sistemas grandes e o mais proximo da estetica de ilustracao
+    cientifica.
+    """
+    if not prepare():
+        return
+    _reset()
+    cmd.set("gaussian_resolution", 3.0)
+    cmd.map_new("map_tail", "gaussian", 1.2, "lip_tail", 4)
+    cmd.isosurface("surf_tail", "map_tail", core.auto_isolevel("map_tail"))
+    cmd.color("mv_tail_a", "surf_tail")
+    cmd.disable("map_tail")
+
+    cmd.show("spheres", "lip_head")
+    cmd.show("spheres", "lip_phos")
+    cmd.set("sphere_scale", 0.75, "obj_lipid")
+    cmd.color("mv_head", "lip_head")
+    cmd.color("mv_phos", "lip_phos")
+
+    _ions_spheres(0.85)
+    water("field", 0.62)
+    _finish("preset_memb5: nucleo continuo")
+
+
+def preset6():
+    """Navegacao rapida.
+
+    Lipideo: linhas, cor por especie
+    Ions:    pontos
+    Agua:    desligada
+    Oclusao ambiente desligada
+
+    Nao e um preset de figura. Existe porque o custo do ray tracing e da AO
+    torna a rotacao inviavel em sistema grande, e enquadrar a cena antes de
+    aplicar um preset caro economiza minutos.
+    """
+    if not prepare():
+        return
+    _reset()
+    cmd.set("ambient_occlusion_mode", 0)
+    cmd.set("sphere_quality", 1)
+    cmd.show("lines", "obj_lipid")
+    cmd.set("line_width", 1.2, "obj_lipid")
+    color("type")
+    _ions_dots()
+    _finish("preset_memb6: navegacao rapida")
+
+
+def register():
+    for name, fn in (("preset_memb1", preset1), ("preset_memb2", preset2),
+                     ("preset_memb3", preset3), ("preset_memb4", preset4),
+                     ("preset_memb5", preset5), ("preset_memb6", preset6),
+                     ("memb_split", split), ("memb_color", color),
+                     ("memb_water", water), ("memb_protein", protein),
+                     ("memb_prepare", prepare)):
+        cmd.extend(name, fn)

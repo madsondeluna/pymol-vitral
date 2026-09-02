@@ -1,0 +1,437 @@
+"""
+pymol_molviz.core
+
+Base compartilhada pelos modulos de membrana e de proteina: paleta, material,
+iluminacao, oclusao ambiente, sombras, modo periodico e exportacao.
+
+Nao e usado diretamente. Carregue pymol_molviz.membrane ou
+pymol_molviz.protein, que importam este modulo.
+"""
+
+from pymol import cmd
+
+
+# =============================================================================
+# Paleta
+# Cores em RGB explicito, e nao por nome do PyMOL, porque a percepcao das
+# cores nomeadas varia com o gamma do display.
+# =============================================================================
+PALETTE = {
+    # Estrutura secundaria
+    "mv_helix":   [0.11, 0.33, 0.65],
+    "mv_sheet":   [0.78, 0.19, 0.17],
+    "mv_loop":    [0.94, 0.94, 0.92],
+    # Lipideos
+    "mv_head":    [0.30, 0.75, 0.25],
+    "mv_phos":    [0.90, 0.55, 0.15],
+    "mv_glyc":    [0.85, 0.85, 0.85],
+    "mv_tail_a":  [0.93, 0.60, 0.20],
+    "mv_tail_b":  [0.86, 0.40, 0.75],
+    "mv_tail_in": [0.82, 0.15, 0.12],
+    # Residuos por carga
+    "mv_pos":     [0.15, 0.40, 0.80],
+    "mv_neg":     [0.82, 0.20, 0.18],
+    "mv_polar":   [0.55, 0.75, 0.90],
+    "mv_apolar":  [0.95, 0.85, 0.45],
+    # Contexto
+    "mv_water":   [0.62, 0.76, 0.88],
+    "mv_lig":     [0.55, 0.45, 0.80],
+    "mv_dna_bb":  [0.90, 0.90, 0.93],
+    "mv_dna_p":   [0.95, 0.70, 0.72],
+    "mv_na":      [0.55, 0.35, 0.85],
+    "mv_cl":      [0.35, 0.80, 0.45],
+}
+
+CHAIN_CYCLE = ["skyblue", "salmon", "palegreen", "wheat", "lightpink",
+               "paleyellow", "deepteal", "lightorange"]
+
+TYPE_CYCLE = ["mv_tail_a", "mv_tail_b", "mv_tail_in", "mv_head",
+              "skyblue", "wheat", "deepteal", "salmon", "palegreen"]
+
+WATER_RESN = "HOH+WAT+SOL+TIP3+TIP4+T3P+SPC+W+PW"
+ION_RESN = "NA+CL+K+MG+CA+ZN+FE+MN+CU+SOD+CLA+POT+ION+NA++CL-"
+
+ALL_REPS = ("cartoon", "spheres", "sticks", "surface", "mesh", "dots",
+            "lines", "nonbonded", "ribbon")
+
+
+# =============================================================================
+# Utilitarios
+# =============================================================================
+def truthy(v):
+    # Argumentos da linha de comando do PyMOL chegam sempre como string.
+    if isinstance(v, str):
+        return v.strip().lower() in ("1", "on", "yes", "true", "t")
+    return bool(v)
+
+
+def has(sel):
+    try:
+        return cmd.count_atoms(sel) > 0
+    except Exception:
+        return False
+
+
+def n_residues(sel):
+    if not has(sel):
+        return 0
+    return len(set(cmd.get_model(sel).get_residues()))
+
+
+def define_colors():
+    for name, rgb in PALETTE.items():
+        cmd.set_color(name, rgb)
+
+
+def source_objects(reserved):
+    """Objetos carregados pelo usuario, excluindo os criados pelos modulos."""
+    return [o for o in cmd.get_object_list("all") if o not in reserved]
+
+
+def clear_reps(objects):
+    for obj in objects:
+        if has(obj):
+            for rep in ALL_REPS:
+                cmd.hide(rep, obj)
+            cmd.set("transparency", 0.0, obj)
+            cmd.set("sphere_transparency", 0.0, obj)
+            cmd.set("cartoon_transparency", 0.0, obj)
+
+
+def auto_isolevel(map_name, bins=8):
+    """Nivel de isosuperficie derivado do histograma do mapa.
+
+    Um nivel fixo falha em silencio quando a resolucao gaussiana muda: o
+    isosurface nao gera triangulo nenhum, e objeto vazio nao e registrado pelo
+    PyMOL, o que produz um confuso 'Invalid selection name' adiante.
+    """
+    h = cmd.get_volume_histogram(map_name, bins)
+    return min(h[2] + h[3], h[1] * 0.8)   # media + 1 desvio, teto em 80% do max
+
+
+# =============================================================================
+# Material e iluminacao
+# =============================================================================
+def material(shadows=1, ao=1, hq=1):
+    """Material plastico opaco, oclusao ambiente e fundo branco.
+
+    specular baixo + shininess intermediario produz brilho largo e difuso, de
+    polimero fosco. shininess alto gera highlight pontual, que le como vidro.
+
+    O balanco de luz e calibrado para a oclusao ambiente ser visivel: a AO do
+    PyMOL modula o termo ambiente, entao com 'ambient' baixo ela existe mas
+    nao aparece. Dai ambiente relativamente alto e luz direta moderada.
+    """
+    define_colors()
+
+    hq = truthy(hq)
+    cmd.set("sphere_quality", 3 if hq else 1)
+    cmd.set("stick_quality", 20 if hq else 8)
+    cmd.set("surface_quality", 1 if hq else 0)
+    cmd.set("cartoon_sampling", 16 if hq else 7)
+    cmd.set("ribbon_sampling", 16 if hq else 7)
+
+    cmd.set("specular", 0.22)
+    cmd.set("shininess", 25)
+    cmd.set("spec_reflect", 0.10)
+    cmd.set("spec_direct", 0.05)
+    cmd.set("reflect", 0.32)
+    cmd.set("direct", 0.22)
+    cmd.set("ambient", 0.44)
+
+    # Poucas luzes: com ambiente alto, muitas luzes lavam a cena e anulam o
+    # contraste que a oclusao acabou de criar.
+    cmd.set("light_count", 4)
+    cmd.set("light", [-0.35, -0.35, -0.90])
+    cmd.set("light2", [0.45, -0.20, -0.70])
+    cmd.set("light3", [-0.20, 0.50, -0.60])
+
+    cmd.set("ambient_occlusion_mode", 1 if truthy(ao) else 0)
+    cmd.set("ambient_occlusion_scale", 25)
+    cmd.set("ambient_occlusion_smooth", 15)
+
+    cmd.set("ray_shadow", 1 if truthy(shadows) else 0)
+    cmd.set("ray_shadow_decay_factor", 0.15)
+    cmd.set("ray_shadow_decay_range", 1.8)
+    # Transparencia nao projeta sombra: uma superficie de agua cobrindo a caixa
+    # escureceria tudo por baixo e a cena viraria um cinza uniforme.
+    cmd.set("ray_transparency_shadows", 0)
+    cmd.set("ray_interior_shadows", 0)
+    cmd.set("ray_trace_mode", 0)          # > 0 desenha contorno de ilustracao
+    cmd.set("ray_interior_color", "grey20")
+
+    cmd.set("orthoscopic", 0)
+    cmd.set("field_of_view", 20)
+    cmd.set("depth_cue", 0)
+    cmd.set("ray_trace_fog", 0)
+    cmd.set("transparency_mode", 2)       # blending por profundidade
+    cmd.set("two_sided_lighting", 1)
+    cmd.set("surface_smooth_edges", 1)
+    cmd.set("auto_show_selections", 0)    # indicadores rosa cobririam a cena
+
+    cmd.bg_color("white")
+    cmd.set("ray_opaque_background", 1)
+
+    cartoon_style()
+
+
+def cartoon_style():
+    """Cartoon sem pontas agudas.
+
+    'oval' nas fitas beta substitui a seta por uma fita eliptica arredondada.
+    Contrapartida: perde-se a indicacao de direcionalidade N->C.
+    """
+    cmd.set("cartoon_oval_width", 0.85)
+    cmd.set("cartoon_oval_length", 1.30)
+    cmd.set("cartoon_oval_quality", 16)
+    cmd.set("cartoon_loop_radius", 0.32)
+    cmd.set("cartoon_loop_quality", 16)
+    cmd.set("cartoon_tube_radius", 0.45)
+    cmd.set("cartoon_flat_sheets", 0)     # mantem a torcao real da fita
+    cmd.set("cartoon_smooth_loops", 1)
+    cmd.set("cartoon_round_helices", 1)
+    cmd.set("cartoon_fancy_helices", 0)   # 1 adiciona aresta e quebra o smooth
+    cmd.set("cartoon_highlight_color", -1)
+    cmd.set("cartoon_discrete_colors", 0)
+    cmd.set("cartoon_side_chain_helper", 1)
+
+
+AO_LEVELS = {
+    # (modo, ambient, direct, reflect, escala)
+    "off":     (0, 0.14, 0.38, 0.42, 0),
+    "soft":    (1, 0.32, 0.26, 0.36, 18),
+    "medium":  (1, 0.45, 0.20, 0.32, 25),
+    "strong":  (1, 0.62, 0.12, 0.22, 35),
+    "extreme": (1, 0.80, 0.05, 0.12, 45),
+}
+
+
+def ambient_occlusion(strength="medium"):
+    """Oclusao ambiente: off, soft, medium, strong, extreme.
+
+    Cada nivel ajusta ambiente, luz direta e escala em conjunto, porque a AO
+    modula o termo ambiente e mexer so na escala nao muda quase nada.
+
+    A AO e assada na geometria no momento da construcao, entao o rebuild e
+    obrigatorio. Limitacao do PyMOL: ela atua sobre esferas e superficies, nao
+    sobre cartoon.
+    """
+    if strength not in AO_LEVELS:
+        print("[molviz] niveis: %s" % ", ".join(AO_LEVELS))
+        return
+    mode, amb, direct, reflect, scale = AO_LEVELS[strength]
+    cmd.set("ambient_occlusion_mode", mode)
+    cmd.set("ambient", amb)
+    cmd.set("direct", direct)
+    cmd.set("reflect", reflect)
+    if scale:
+        cmd.set("ambient_occlusion_scale", scale)
+    cmd.rebuild()
+    print("[molviz] oclusao: %s (nao atua sobre cartoon)" % strength)
+
+
+SHADOW_LEVELS = {
+    # (ray_shadow, luzes, direct, ambient, decaimento)
+    "off":    (0, 3, 0.20, 0.45, 0.0),
+    "soft":   (1, 6, 0.35, 0.38, 0.15),
+    "medium": (1, 3, 0.50, 0.30, 0.10),
+    "hard":   (1, 1, 0.70, 0.18, 0.00),
+}
+
+
+def shadows(level="soft"):
+    """Sombras projetadas: off, soft, medium, hard.
+
+    So aparecem apos 'ray', nunca no viewport. Dependem de luz direta forte,
+    que e o que a calibracao de AO reduz, entao cada nivel reajusta direct e
+    ambient junto.
+
+    A maciez vem do numero de luzes: nao existe raio de fonte de luz no PyMOL,
+    e a penumbra e a sobreposicao de varias sombras. Por isso 'soft' custa
+    mais tempo de render que 'hard', nao menos.
+    """
+    if level not in SHADOW_LEVELS:
+        print("[molviz] niveis: %s" % ", ".join(SHADOW_LEVELS))
+        return
+    shadow, nlight, direct, ambient, decay = SHADOW_LEVELS[level]
+    cmd.set("ray_shadow", shadow)
+    cmd.set("light_count", nlight)
+    cmd.set("direct", direct)
+    cmd.set("ambient", ambient)
+    cmd.set("ray_shadow_decay_factor", decay)
+    cmd.set("ray_shadow_decay_range", 1.8)
+    cmd.set("ray_transparency_shadows", 0)
+    cmd.rebuild()
+    print("[molviz] sombras: %s. Visiveis apenas apos 'ray'." % level)
+
+
+def realism(mode="studio", desat=1):
+    """Combinacao de iluminacao: studio, depth, dramatic, flat.
+
+    Nenhum parametro isolado produz realismo. O que produz e a convivencia de
+    oclusao de contato, sombra projetada suave, perspectiva real e
+    desaturacao — pigmento real e menos saturado que RGB puro.
+
+    studio   - luz de tres pontos, sombra suave. Neutro, para figura.
+    depth    - studio + neblina atmosferica, para sistemas espessos.
+    dramatic - luz principal unica e rasante. Alto contraste; perde detalhe
+               nas regioes escuras.
+    flat     - sem sombra nem AO. Nao e realista; existe para comparar.
+    """
+    presets = {
+        # (ambient, direct, reflect, luzes, sombra, ao, ao_escala, fog, fov)
+        "studio":   (0.38, 0.34, 0.30, 6, 1, 1, 28, 0, 30),
+        "depth":    (0.38, 0.34, 0.30, 6, 1, 1, 28, 1, 32),
+        "dramatic": (0.16, 0.75, 0.18, 1, 1, 1, 20, 0, 35),
+        "flat":     (0.55, 0.45, 0.20, 2, 0, 0, 0, 0, 20),
+    }
+    if mode not in presets:
+        print("[molviz] modos: %s" % ", ".join(presets))
+        return
+
+    amb, direct, refl, nlight, shad, ao, scale, fog, fov = presets[mode]
+    cmd.set("ambient", amb)
+    cmd.set("direct", direct)
+    cmd.set("reflect", refl)
+    cmd.set("light_count", nlight)
+    cmd.set("ray_shadow", shad)
+    cmd.set("ambient_occlusion_mode", ao)
+    if scale:
+        cmd.set("ambient_occlusion_scale", scale)
+    cmd.set("depth_cue", fog)
+    cmd.set("ray_trace_fog", fog)
+    cmd.set("field_of_view", fov)
+    if fog:
+        # Com fundo branco a neblina clareia, nao escurece.
+        cmd.set("fog_start", 0.40)
+    if mode == "dramatic":
+        cmd.set("light", [-0.60, -0.45, -0.65])
+
+    # Especularidade dupla: um lobo largo e fosco mais um estreito e fraco. E
+    # o que separa plastico de qualidade de plastico de brinquedo, que tem um
+    # unico highlight duro.
+    cmd.set("specular", 0.20)
+    cmd.set("shininess", 28)
+    cmd.set("spec_count", 2)
+    cmd.set("spec_reflect", 0.08)
+    cmd.set("ray_transparency_specular", 0.12)
+    cmd.set("ray_trace_mode", 0)
+    cmd.set("ray_transparency_shadows", 0)
+
+    if truthy(desat):
+        desaturate(0.18)
+    cmd.rebuild()
+    print("[molviz] realismo: %s. Completo apenas apos 'ray'." % mode)
+
+
+def desaturate(amount=0.18):
+    """Puxa a paleta na direcao do cinza medio de cada cor.
+
+    Cor totalmente saturada le como plastico de brinquedo; pigmento real
+    reflete uma banda larga do espectro, nunca um canal puro. 0.18 e sutil;
+    acima de 0.4 a estratificacao de cor comeca a se perder.
+    Reversivel: desaturate(0) restaura a paleta original.
+    """
+    a = float(amount)
+    for name, rgb in PALETTE.items():
+        mid = sum(rgb) / 3.0
+        cmd.set_color(name, [c * (1 - a) + mid * a for c in rgb])
+    cmd.recolor()
+
+
+# =============================================================================
+# Figura de periodico e exportacao
+# =============================================================================
+def paper(width_mm=85, dpi=300):
+    """Configuracao para figura de periodico.
+
+    Prioriza legibilidade em impressao e reducao, nao impacto visual. Difere
+    de realism() em tres pontos deliberados:
+
+    - Sombra projetada desligada: em figura reduzida ela escurece regioes sem
+      carregar informacao. A oclusao de contato fica, pois comunica relevo.
+    - Projecao ortografica: perspectiva faz um folheto plano parecer curvo, o
+      que e desonesto numa figura quantitativa.
+    - Paleta saturada restaurada: cor saturada separa melhor as camadas quando
+      a figura cai para a largura de uma coluna.
+
+    width_mm: 85 para coluna simples, 170 para largura dupla.
+    """
+    cmd.set("ambient", 0.45)
+    cmd.set("direct", 0.30)
+    cmd.set("reflect", 0.25)
+    cmd.set("light_count", 2)
+    cmd.set("ray_shadow", 0)
+    cmd.set("ambient_occlusion_mode", 1)
+    cmd.set("ambient_occlusion_scale", 25)
+    cmd.set("ambient_occlusion_smooth", 15)
+    cmd.set("specular", 0.18)
+    cmd.set("shininess", 30)
+    cmd.set("spec_count", 1)
+    cmd.set("depth_cue", 0)
+    cmd.set("ray_trace_fog", 0)
+    cmd.set("orthoscopic", 1)
+    cmd.set("ray_trace_mode", 0)
+    cmd.set("grayscale", 0)
+    desaturate(0.0)
+    cmd.rebuild()
+
+    px = int(round(float(width_mm) / 25.4 * float(dpi)))
+    print("[molviz] modo periodico. %s mm a %s dpi = %d px." % (width_mm, dpi, px))
+    print("[molviz] renderize: mv_render figura.png, %d, %d, %s"
+          % (px, int(px * 0.75), dpi))
+    return px
+
+
+def grayscale(on=1):
+    """Teste de impressao em preto e branco.
+
+    Nao e opcional: muitos periodicos ainda imprimem em P&B ou cobram por
+    figura colorida. Cores de luminancia proxima (o verde das cabecas contra o
+    laranja das caudas, o azul das helices contra o vermelho das folhas) podem
+    colapsar no mesmo tom. Se ocorrer, diferencie por claridade, nao so matiz.
+    """
+    cmd.set("grayscale", 1 if truthy(on) else 0)
+    cmd.rebuild()
+    print("[molviz] escala de cinza: %s" % ("on" if truthy(on) else "off"))
+
+
+def extent(sel):
+    """Dimensoes em angstrom e nanometro, para a legenda da figura.
+
+    O PyMOL nao desenha barra de escala para sistemas moleculares; o caminho
+    pratico e informar a dimensao no texto.
+    """
+    if not has(sel):
+        print("[molviz] selecao vazia: %s" % sel)
+        return
+    (x1, y1, z1), (x2, y2, z2) = cmd.get_extent(sel)
+    d = (x2 - x1, y2 - y1, z2 - z1)
+    print("[molviz] %s: %.1f x %.1f x %.1f A (%.1f x %.1f x %.1f nm)"
+          % ((sel,) + d + tuple(v / 10.0 for v in d)))
+    return d
+
+
+def render(filename="figura.png", width=3000, height=2400, dpi=600,
+           transparent=0):
+    """Render e exportacao.
+
+    O viewport nao aplica o modelo especular, as sombras nem o antialiasing:
+    so o ray mostra o material real. Fundo branco gravado por padrao.
+    """
+    cmd.set("ray_opaque_background", 0 if truthy(transparent) else 1)
+    cmd.set("antialias", 5)
+    cmd.set("hash_max", 400)
+    cmd.ray(int(width), int(height))
+    cmd.png(filename, dpi=int(dpi))
+    print("[molviz] salvo: %s (%dx%d, %s dpi)" % (filename, width, height, dpi))
+
+
+def register_common():
+    """Comandos compartilhados, prefixados mv_."""
+    for name, fn in (("mv_material", material), ("mv_ao", ambient_occlusion),
+                     ("mv_shadows", shadows), ("mv_realism", realism),
+                     ("mv_desaturate", desaturate), ("mv_paper", paper),
+                     ("mv_grayscale", grayscale), ("mv_extent", extent),
+                     ("mv_render", render)):
+        cmd.extend(name, fn)
