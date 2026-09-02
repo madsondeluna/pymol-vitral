@@ -35,16 +35,23 @@ from pymol_molviz import membrane, protein            # noqa: E402
 SAIDA = os.path.join(RAIZ, "docs", "img")
 LARGURA, ALTURA, DPI = 560, 440, 90
 
-# (rotulo, giros aplicados depois do enquadramento do preset)
-VISTAS_MEMB = (("lado", []),
-               ("topo", [("x", 90)]),
-               ("obliqua", [("x", 55), ("y", 25)]))
+# (rotulo, giros aplicados sobre a vista de referencia)
+#
+# Na membrana a referencia NAO e o enquadramento do preset. 'orient' alinha o
+# maior eixo do objeto com a horizontal da tela, e uma bicamada e plana em xy:
+# o resultado e a vista de topo, com a rotulada 'lado' mostrando exatamente o
+# contrario do nome. A referencia da membrana e a vista canonica do 'reset',
+# onde z aponta para o observador, e de la os giros sao previsiveis.
+VISTAS_MEMB = (("lado", [("x", 90)]),
+               ("topo", []),
+               ("obliqua", [("x", 60), ("y", 20)]))
 VISTAS_PROT = (("frente", []),
                ("lado", [("y", 90)]),
                ("verso", [("y", 180)]))
 
 
-def render(modulo, prefixo, indices, vistas, arquivo, obj_zoom):
+def render(modulo, prefixo, indices, vistas, arquivo, obj_zoom,
+           reset_camera=False):
     cmd.delete("all")
     cmd.load(arquivo, "sistema")
     modulo.split()
@@ -62,8 +69,10 @@ def render(modulo, prefixo, indices, vistas, arquivo, obj_zoom):
             continue
 
         fn()
-        # A vista de referencia e a que o preset deixou: cada giro parte dela,
-        # e nao do giro anterior, senao a terceira vista acumula os tres.
+        if reset_camera:
+            cmd.reset()
+        # A vista de referencia e uma so: cada giro parte dela, e nao do giro
+        # anterior, senao a terceira vista acumularia os tres.
         base = cmd.get_view()
         for (rotulo, giros), destino in zip(vistas, destinos):
             cmd.set_view(base)
@@ -83,6 +92,7 @@ pymol_molviz.load(auto=False)
 render(protein, "prot", range(1, 11), VISTAS_PROT,
        os.path.join(RAIZ, "prot", "4hhb.pdb"), "obj_prot")
 render(membrane, "memb", range(1, 11), VISTAS_MEMB,
-       os.path.join(RAIZ, "memb", "bilbo_preview.pdb"), "obj_lipid")
+       os.path.join(RAIZ, "memb", "bilbo_preview.pdb"), "obj_lipid",
+       reset_camera=True)
 
 print("GALERIA COMPLETA")
