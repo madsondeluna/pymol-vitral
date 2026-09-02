@@ -41,17 +41,25 @@ cabeça o que fica além do fosfato do próprio lipídeo, na direção do solven
 A comparação é por molécula e não contra o z médio do folheto, porque com a
 média as moléculas mais afundadas perdem a cabeça inteira.
 
-Dois casos ficam de fora, e nenhum é falha de implementação:
+Dois casos escapam da posição, e nenhum é falha dela:
 
 - **Cabeça dobrada.** Se o glicerol da cabeça está voltado para dentro, ele não
-  está além do fosfato e não é marcado. Aparece em estrutura não minimizada.
+  está além do fosfato. Aparece em estrutura não minimizada.
 - **Cardiolipina.** O glicerol central fica entre os dois fosfatos, portanto
   mais interno que eles por construção química. Nenhum critério posicional a
   alcança.
 
+Para esses existe o dicionário `HEAD_NAMES`, na convenção CHARMM, como último
+recurso. Ele entra por espécie e só quando menos da metade das moléculas de um
+resíduo ficou sem cabeça, e nunca substitui o que a posição já resolveu. Como
+qualquer regra por nome, vale para CHARMM e não para Berger, GROMOS ou Slipids;
+nesses, o critério posicional continua sendo o que decide. O log diz quando o
+dicionário foi acionado e para quantas moléculas.
+
 Cobertura medida num sistema misto de 200 lipídeos com seis espécies mais
-cardiolipina: 84 por cento com cabeça marcada, contra 29 por cento pelo
-critério de nitrogênio sozinho.
+cardiolipina: 29 por cento pelo nitrogênio sozinho, 84 por cento acrescentando
+a posição, 100 por cento com o dicionário completando as duas espécies que
+sobraram.
 
 **A separação de folhetos assume a normal da membrana em z**, usando o centro de
 massa dos fosfatos como plano médio. Em vesícula ou membrana com curvatura

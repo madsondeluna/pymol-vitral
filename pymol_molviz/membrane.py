@@ -24,6 +24,37 @@ LIPID_RESN = (
 INNER_LEAFLET_RESN = "POPG+POPS+CDL+CDL2+CARD"
 STEROL_RESN = "CHOL+CHL1"
 
+# Nomes de atomo da cabeca, na convencao CHARMM, por classe de lipideo. Sao o
+# ULTIMO recurso: entram apenas nas especies que o criterio posicional nao
+# cobriu, e nunca substituem o que ele ja resolveu.
+#
+# Existem porque duas situacoes escapam da posicao e nao por falha dela. Uma
+# cabeca dobrada para dentro nao esta alem do fosfato, e o glicerol central da
+# cardiolipina fica ENTRE os dois fosfatos por construcao quimica, portanto
+# mais interno que eles. Medido no sistema de teste: P1 liga a C1 e P3 liga a
+# C3, entao o glicerol central e C1-C2-C3 com a hidroxila OG12.
+#
+# Como qualquer regra por nome, isto vale para CHARMM e nao para Berger,
+# GROMOS ou Slipids. Nesses o criterio posicional continua sendo o que vale.
+HEAD_NAMES = {
+    "PG": "C11+C12+C13+OC2+OC3",
+    "PI": "C11+C12+C13+C14+C15+C16+O2+O3+O4+O5+O6",
+    "PS": "C11+C12+C13+O13A+O13B",
+    "CL": "C1+C2+C3+OG12",
+}
+
+# resn -> classe em HEAD_NAMES.
+HEAD_CLASS = (
+    (("CL", "CDL", "CDL2", "TOCL", "TMCL", "CARD"), "CL"),
+    (("PI",), "PI"),
+    (("PS",), "PS"),
+    (("PG",), "PG"),
+)
+
+# Abaixo desta fracao de moleculas com cabeca marcada, a especie recorre ao
+# dicionario. Meia especie coberta ja indica que a posicao nao resolve ali.
+HEAD_FALLBACK_RATIO = 0.5
+
 # Nomes de particula Martini, usados quando o sistema e coarse-grained.
 CG_NAMES = {
     "head": "NC3+NH3+CNO+GL0+TAP",
@@ -133,6 +164,9 @@ def _lipid_parts():
         if _mark_distal_head():
             cmd.select("lip_head", "lip_head or lip_head_geo")
             cmd.delete("lip_head_geo")
+        for resn, n in _head_by_name():
+            print("[membrane] %s: cabeca pelo dicionario CHARMM (%d moleculas)"
+                  % (resn, n))
         cmd.select("lip_glyc",
                    "obj_lipid and not (lip_head or lip_phos) and (elem O or "
                    "(elem C within 1.8 of (obj_lipid and elem O and not "
@@ -218,6 +252,48 @@ def _mark_distal_head(nome="lip_head_geo"):
         return False
     cmd.select_list(nome, "obj_lipid", fora, mode="index")
     return True
+
+
+def _head_class(resn):
+    r = resn.strip().upper()
+    for chaves, classe in HEAD_CLASS:
+        for k in chaves:
+            if r == k or r.endswith(k):
+                return classe
+    return None
+
+
+def _head_by_name():
+    """Completa a cabeca por nome, nas especies que a posicao nao cobriu.
+
+    Mede por especie: se menos da metade das moleculas de um resn ficou com
+    cabeca, aquela especie inteira recorre ao dicionario. A medida e por
+    especie e nao por molecula porque a causa tambem e: ou a quimica daquele
+    lipideo escapa do criterio posicional, ou nao escapa.
+
+    Devolve a lista de (resn, moleculas) que precisaram do dicionario.
+    """
+    por_especie = {}
+    cmd.iterate("obj_lipid", "por_especie.setdefault(resn, set()).add((chain, resi))",
+                space={"por_especie": por_especie})
+    com_cabeca = {}
+    cmd.iterate("lip_head", "com_cabeca.setdefault(resn, set()).add((chain, resi))",
+                space={"com_cabeca": com_cabeca})
+
+    usados = []
+    for resn, moleculas in por_especie.items():
+        classe = _head_class(resn)
+        if classe is None or not moleculas:
+            continue
+        cobertas = len(com_cabeca.get(resn, ()))
+        if cobertas / float(len(moleculas)) >= HEAD_FALLBACK_RATIO:
+            continue
+        alvo = ("obj_lipid and resn %s and name %s and not lip_phos"
+                % (resn, HEAD_NAMES[classe]))
+        if cmd.count_atoms(alvo):
+            cmd.select("lip_head", "lip_head or (%s)" % alvo)
+            usados.append((resn, len(moleculas)))
+    return usados
 
 
 def _phosphate_midplane():
