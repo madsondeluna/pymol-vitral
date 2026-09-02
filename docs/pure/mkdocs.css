@@ -1,0 +1,166 @@
+/* Ponte entre a Pure Design Language e o tema Material do MkDocs.
+   Nenhum valor literal: cada propriedade do Material recebe um token. */
+
+:root,
+[data-md-color-scheme="pure"] {
+  --md-default-bg-color:        var(--bg);
+  --md-default-fg-color:        var(--text);
+  --md-default-fg-color--light: var(--muted);
+  --md-default-fg-color--lighter: var(--secondary);
+  --md-default-fg-color--lightest: var(--border);
+
+  --md-primary-bg-color:        var(--surface);
+  --md-primary-fg-color:        var(--text);
+  --md-accent-fg-color:         var(--accent);
+
+  --md-typeset-color:           var(--text);
+  --md-typeset-a-color:         var(--accent);
+
+  --md-code-bg-color:           var(--surface);
+  --md-code-fg-color:           var(--text);
+
+  --md-text-font:               var(--font-sans);
+  --md-code-font:               var(--font-mono);
+
+  --md-typeset-table-color:     var(--border);
+  color-scheme: light;
+}
+
+[data-md-color-scheme="pure-dark"] {
+  color-scheme: dark;
+}
+
+body,
+.md-typeset {
+  font-family: var(--font-sans);
+  font-size: var(--text-15);
+  line-height: var(--leading-normal);
+  color: var(--text);
+}
+
+/* Titulo de secao pela largura, nao por familia serifada: e a regra da
+   linguagem, e o que separa titulo de texto sem trocar de voz. */
+.md-typeset h1,
+.md-typeset h2 {
+  font-family: var(--font-display);
+  font-stretch: var(--font-display-stretch);
+  font-weight: var(--weight-light);
+  letter-spacing: var(--tracking-display);
+  color: var(--text);
+}
+
+.md-typeset h3,
+.md-typeset h4 {
+  font-family: var(--font-sans);
+  font-weight: var(--weight-medium);
+  color: var(--text);
+}
+
+/* Dado em mono: numero, rotulo, identificador e comando. */
+.md-typeset code,
+.md-typeset pre,
+.md-typeset kbd {
+  font-family: var(--font-mono);
+  font-size: var(--text-13);
+}
+
+.md-typeset pre > code {
+  border-radius: var(--radius-surface);
+  border: var(--hairline) solid var(--border);
+  background: var(--surface);
+}
+
+.md-typeset :not(pre) > code {
+  border-radius: var(--radius-mark);
+  background: var(--surface);
+  color: var(--text);
+  padding: 0.1em 0.35em;
+}
+
+/* Tabela: e o formato principal desta documentacao, entao vale o ajuste. */
+.md-typeset table:not([class]) {
+  border: var(--hairline) solid var(--border);
+  border-radius: var(--radius-surface);
+  font-size: var(--text-14);
+  overflow: hidden;
+}
+
+.md-typeset table:not([class]) th {
+  background: var(--surface);
+  color: var(--text);
+  font-weight: var(--weight-semibold);
+}
+
+.md-typeset table:not([class]) td {
+  border-top: var(--hairline) solid var(--border);
+}
+
+/* Tabela larga rola dentro da propria caixa: o corpo da pagina nunca rola na
+   horizontal. */
+.md-typeset__table {
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+}
+
+/* As figuras dos presets ficam lado a lado numa tabela de duas colunas. */
+.md-typeset table:not([class]) img {
+  border-radius: var(--radius-media);
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.md-typeset .md-button,
+.md-typeset a {
+  color: var(--accent);
+}
+
+.md-header,
+.md-tabs {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: none;
+  border-bottom: var(--hairline) solid var(--border);
+}
+
+.md-nav__title,
+.md-nav__link {
+  color: var(--muted);
+  font-size: var(--text-14);
+}
+
+.md-nav__link--active,
+.md-nav__link:focus,
+.md-nav__link:hover {
+  color: var(--text);
+}
+
+.md-search__form {
+  background: var(--surface);
+  border: var(--hairline) solid var(--border);
+  border-radius: var(--radius-field);
+}
+
+.md-footer,
+.md-footer-meta {
+  background: var(--surface);
+  color: var(--muted);
+  border-top: var(--hairline) solid var(--border);
+}
+
+/* Foco sempre visivel, e nunca 'outline: none' sem substituto. */
+.md-typeset a:focus-visible,
+.md-nav__link:focus-visible,
+.md-header__button:focus-visible {
+  outline: var(--focus-ring) solid var(--text);
+  outline-offset: var(--focus-offset);
+}
+
+/* Area de toque decidida por tipo de ponteiro, nunca por largura. */
+@media (pointer: coarse) {
+  .md-nav__link,
+  .md-header__button,
+  .md-typeset table:not([class]) a {
+    min-height: var(--hit-min-touch);
+  }
+}

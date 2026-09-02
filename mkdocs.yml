@@ -1,0 +1,66 @@
+site_name: pymol-molviz
+site_description: Visualization presets for PyMOL, for lipid bilayers, proteins and peptides
+site_url: https://madsondeluna.github.io/pymol-vitral/
+repo_url: https://github.com/madsondeluna/pymol-vitral
+repo_name: madsondeluna/pymol-vitral
+edit_uri: ""
+
+docs_dir: docs
+
+theme:
+  name: material
+  language: en
+  # A tipografia vem da Pure Design Language, nao do Material: Public Sans para
+  # linguagem, Spline Sans Mono para dado, Archivo para titulo de secao.
+  font: false
+  palette:
+    - scheme: pure
+      toggle:
+        icon: material/weather-night
+        name: Dark
+    - scheme: slate
+      toggle:
+        icon: material/weather-sunny
+        name: Light
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.sections
+    - navigation.top
+    - toc.follow
+    - content.code.copy
+    - search.highlight
+
+extra_css:
+  - https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,300;400&family=Public+Sans:wght@300;400;500;600&family=Spline+Sans+Mono:wght@400;500&display=swap
+  - pure/tokens.css
+  - pure/mkdocs.css
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.superfences
+  - pymdownx.inlinehilite
+
+nav:
+  - Overview: index.md
+  - Presets:
+      - Protein: presets/protein.md
+      - Membrane: presets/membrane.md
+  - Commands: commands.md
+  - Development: development.md
+  - Reference (Portuguese):
+      - Passo a passo: passo-a-passo.md
+      - Presets: presets.md
+      - Limitacoes: limitacoes.md
+      - Adaptacao: adaptacao.md
+      - Decisoes: decisoes.md
+
+not_in_nav: |
+  img/
