@@ -35,7 +35,7 @@ preset_prot2
 
 | front | 90 deg | 180 deg |
 |---|---|---|
-| _(pending)_ | _(pending)_ | _(pending)_ |
+| ![preset_prot2 frente](img/prot2_frente.png) | ![preset_prot2 lado](img/prot2_lado.png) | ![preset_prot2 verso](img/prot2_verso.png) |
 
 ### `preset_prot3`
 
@@ -47,7 +47,7 @@ preset_prot3
 
 | front | 90 deg | 180 deg |
 |---|---|---|
-| _(pending)_ | _(pending)_ | _(pending)_ |
+| ![preset_prot3 frente](img/prot3_frente.png) | ![preset_prot3 lado](img/prot3_lado.png) | ![preset_prot3 verso](img/prot3_verso.png) |
 
 ### `preset_prot4`
 
@@ -59,7 +59,7 @@ preset_prot4
 
 | front | 90 deg | 180 deg |
 |---|---|---|
-| _(pending)_ | _(pending)_ | _(pending)_ |
+| ![preset_prot4 frente](img/prot4_frente.png) | ![preset_prot4 lado](img/prot4_lado.png) | ![preset_prot4 verso](img/prot4_verso.png) |
 
 ### `preset_prot5`
 
@@ -71,7 +71,7 @@ preset_prot5
 
 | front | 90 deg | 180 deg |
 |---|---|---|
-| _(pending)_ | _(pending)_ | _(pending)_ |
+| ![preset_prot5 frente](img/prot5_frente.png) | ![preset_prot5 lado](img/prot5_lado.png) | ![preset_prot5 verso](img/prot5_verso.png) |
 
 ### `preset_prot6`
 
@@ -83,7 +83,7 @@ preset_prot6
 
 | front | 90 deg | 180 deg |
 |---|---|---|
-| _(pending)_ | _(pending)_ | _(pending)_ |
+| ![preset_prot6 frente](img/prot6_frente.png) | ![preset_prot6 lado](img/prot6_lado.png) | ![preset_prot6 verso](img/prot6_verso.png) |
 
 ### `preset_prot7`
 
@@ -95,7 +95,7 @@ preset_prot7
 
 | front | 90 deg | 180 deg |
 |---|---|---|
-| _(pending)_ | _(pending)_ | _(pending)_ |
+| ![preset_prot7 frente](img/prot7_frente.png) | ![preset_prot7 lado](img/prot7_lado.png) | ![preset_prot7 verso](img/prot7_verso.png) |
 
 ### `preset_prot8`
 
@@ -107,7 +107,7 @@ preset_prot8
 
 | front | 90 deg | 180 deg |
 |---|---|---|
-| _(pending)_ | _(pending)_ | _(pending)_ |
+| ![preset_prot8 frente](img/prot8_frente.png) | ![preset_prot8 lado](img/prot8_lado.png) | ![preset_prot8 verso](img/prot8_verso.png) |
 
 ### `preset_prot9`
 
