@@ -126,72 +126,465 @@ the side panel.
 | `obj_lig` | ligands |
 | `obj_nucl` | nucleic acid |
 
-## Membrane presets
-
-Every preset takes an optional `paper` argument: the column width in
-millimetres. Without it the preset only sets representation and colour, so
-lighting stays as it was and `mv_paper` can follow. With it the scene comes out
-ready for print in one line: `preset_memb5 paper=85`.
-
-| Command | Lipid | Ions | Water | Answers |
-|---|---|---|---|---|
-| `preset_memb1` | spheres at scale 0.55, coloured by chemical moiety | opaque spheres, scale 0.5 | translucent surface, 0.62 | general reading, layer organization |
-| `preset_memb2` | spacefill at van der Waals radius, coloured by leaflet | real radius | translucent surface, 0.78 | occupied volume, the barrier |
-| `preset_memb3` | sticks at radius 0.30, heads as spheres | opaque core plus solvation shell | translucent spheres | ion to polar head interaction |
-| `preset_memb4` | translucent surface at 0.58 over thin sticks | spheres with inflated mesh | off | inserted peptide |
-| `preset_memb5` | tails as a gaussian isosurface, heads as spheres | opaque spheres, scale 0.85 | gaussian field | illustration, large system |
-| `preset_memb6` | lines at width 1.2, coloured by species, ambient occlusion off | dots | off | navigation, not a figure |
-| `preset_memb7` | central slab in spacefill, coloured by moiety | spheres within 8 A of the slab | off | the bilayer interior, cross-section |
-| `preset_memb8` | lipids contacting the protein in licorice, the rest ghosted | small spheres | off | annular lipids, protein-lipid contact |
-| `preset_memb9` | one translucent surface per leaflet, phosphates as spheres | medium spheres | off | leaflet asymmetry and thickness |
-| `preset_memb10` | dark tails as isosurface, light heads as spheres | off | off | reduction to one column, print in black and white |
-
-`preset_memb5` is the lightest on large systems: it replaces thousands of tail
-atoms with a single isosurface. Its isolevel is derived from the map histogram,
-not fixed, and it falls back to thin sticks when the map comes out empty.
-`preset_memb6` is for navigation, not for figures.
-
-`preset_memb7` takes an `eixo` argument, 0 for x, 1 for y (default) and 2 for
-z. The cut is a coordinate selection rather than the camera clipping plane, so
-rotating the scene afterwards does not change what is exposed.
-
-`preset_memb8` takes a radius in angstrom, default 5.0, and needs a protein in
-the session. `preset_memb9` needs phosphates to find the midplane.
-
 ## Protein presets
 
-| Command | Representation | Colour | Answers |
-|---|---|---|---|
-| `preset_prot1` | cartoon | secondary structure | domain topology |
-| `preset_prot2` | cartoon under a translucent surface, 0.55 | secondary structure | binding site |
-| `preset_prot3` | solid surface, solvent radius 1.4 | Kyte-Doolittle gradient | interaction face, amphipathicity |
-| `preset_prot4` | spacefill at van der Waals radius | chain | complex architecture |
-| `preset_prot5` | putty, thickness 0.6 to 3.5 | B-factor | flexibility |
-| `preset_prot6` | all-atom sticks, radius 0.20 | formal charge | peptides |
-| `preset_prot7` | cartoon plus water and ions within 4.0 A | secondary structure | MD box, solvation shell |
-| `preset_prot8` | surface inside the solvent volume | formal charge | the simulated system as a whole |
-| `preset_prot9` | surface, solvent field, twelve box edges | formal charge | box dimensions, solute to solvent ratio |
-| `preset_prot10` | translucent cartoon, contact side chains in opaque licorice | secondary structure; contact carbons by residue class, rest by element | where two chains, or protein and ligand, touch |
+Ten presets, rendered below from `prot/4hhb.pdb`, haemoglobin: four chains,
+four haems, 221 waters. Every one takes an optional `paper` argument, the
+column width in millimetres, which makes the scene come out ready for print in
+the same line: `preset_prot3 paper=85`.
 
-`prot_auto` picks between `preset_prot1` and `preset_prot6` by residue count,
-with the cutoff at 60. `preset_prot3` writes to the B-factor column;
-`prot_restore_b` puts the original values back. `preset_prot5` reads the
-B-factor column as deposited, which inverts on predicted models carrying pLDDT.
+```
+load prot/4hhb.pdb
+run /path/to/pymol-molviz/molviz.pml
+```
 
-`preset_prot7` takes the shell radius, default 4.0.
+### `preset_prot1` cartoon by secondary structure
 
-`preset_prot10` takes the contact radius (default 4.5) and an optional chain
-pair: `preset_prot10 cadeias=A C`. With more than two chains it shows the pair
-with the largest contact and hides the rest, because a tetramer puts three
-different interfaces in one frame and none of them reads. Surface is the wrong
-representation for this question: a closed surface hides the contact area,
-which sits between the two parts, and translucent it becomes a mass where
-nothing is legible. Cartoon lets you see through, and licorice shows the side
-chain, which is where the interaction happens.
+Domain topology.
 
-`preset_prot9` draws the box from the extent of what is loaded, not from a
-CRYST1 record, which MD frames often lack. It prints the dimensions for the
-caption.
+```
+preset_prot1
+```
+
+| Element | Representation |
+|---|---|
+| Protein | cartoon: oval for sheet, automatic for helix, loop elsewhere |
+| Colour | helix blue, sheet red, loop white |
+| Ligands | sticks, radius 0.22 |
+| Ions | spheres, scale 0.45 |
+| Water | off |
+
+The only preset that communicates global topology. Cartoon receives no ambient occlusion in PyMOL, so this is the scene with the least contact relief.
+
+| Side | Top |
+|---|---|
+| ![Side](docs/img/prot1_lado.png) | ![Top](docs/img/prot1_cima.png) |
+
+### `preset_prot2` cartoon under a ghost surface
+
+Binding site.
+
+```
+preset_prot2
+```
+
+| Element | Representation |
+|---|---|
+| Protein | cartoon under a molecular surface at transparency 0.55 |
+| Colour | secondary structure |
+| Ligands | sticks, radius 0.22, visible through the surface |
+| Ions | spheres, scale 0.45 |
+| Water | off |
+
+Keeps the molecular outline without losing the fold. An opaque surface would bury the ligand.
+
+| Side | Top |
+|---|---|
+| ![Side](docs/img/prot2_lado.png) | ![Top](docs/img/prot2_cima.png) |
+
+### `preset_prot3` solid surface by hydrophobicity
+
+Interaction face, amphipathicity.
+
+```
+preset_prot3
+```
+
+| Element | Representation |
+|---|---|
+| Protein | solid molecular surface, solvent radius 1.4 |
+| Colour | Kyte-Doolittle gradient |
+| Ligands | sticks, radius 0.22 |
+| Ions | spheres, scale 0.45 |
+| Water | off |
+
+The surface does receive ambient occlusion, so this is the scene with the most relief. It writes to the B-factor column; `prot_restore_b` puts the original values back.
+
+| Side | Top |
+|---|---|
+| ![Side](docs/img/prot3_lado.png) | ![Top](docs/img/prot3_cima.png) |
+
+### `preset_prot4` spacefill by chain
+
+Complex architecture.
+
+```
+preset_prot4
+```
+
+| Element | Representation |
+|---|---|
+| Protein | spheres at van der Waals radius, scale 1.0 |
+| Colour | one per chain, from an eight-colour cycle |
+| Ligands | spheres at van der Waals radius |
+| Ions | spheres, scale 0.45 |
+| Water | off |
+
+Occupied volume and packing. In a multi-chain complex this is the most direct way to show the arrangement of the assembly.
+
+| Side | Top |
+|---|---|
+| ![Side](docs/img/prot4_lado.png) | ![Top](docs/img/prot4_cima.png) |
+
+### `preset_prot5` putty by b-factor
+
+Flexibility.
+
+```
+preset_prot5
+```
+
+| Element | Representation |
+|---|---|
+| Protein | cartoon in putty mode, thickness 0.6 to 3.5, radius 0.35 |
+| Colour | B-factor as deposited |
+| Ligands | sticks, radius 0.22 |
+| Ions | spheres, scale 0.45 |
+| Water | off |
+
+Thickness encodes the B-factor: a flexible region comes out thick and red. Valid for experimental structures. On a predicted model the B column usually carries pLDDT, whose scale means the opposite.
+
+| Side | Top |
+|---|---|
+| ![Side](docs/img/prot5_lado.png) | ![Top](docs/img/prot5_cima.png) |
+
+### `preset_prot6` all-atom licorice by charge
+
+Peptides.
+
+```
+preset_prot6
+```
+
+| Element | Representation |
+|---|---|
+| Protein | all-atom sticks, radius 0.20, side chain helper off |
+| Colour | basic blue, acidic red, polar light blue, apolar yellow |
+| Ligands | sticks, radius 0.22 |
+| Ions | spheres, scale 0.45 |
+| Water | off |
+
+For peptides, where cartoon says little: there is no global topology to summarise and the information is in the side chain. Above 60 residues it warns and the scene becomes an illegible mass.
+
+| Side | Top |
+|---|---|
+| ![Side](docs/img/prot6_lado.png) | ![Top](docs/img/prot6_cima.png) |
+
+### `preset_prot7` solvated system
+
+MD box, solvation shell.
+
+```
+preset_prot7
+```
+
+| Element | Representation |
+|---|---|
+| Protein | cartoon, oval sheet and loop |
+| Colour | secondary structure |
+| Water | only within 4.0 A of the protein, selected by `byres` |
+| Ions | only within 6.0 A of the protein |
+| Ligands | sticks, radius 0.22 |
+
+Discards bulk water and ions, which in a typical box are more than 90 per cent of the atoms and hide the solute entirely. Takes the shell radius: `preset_prot7 6.0`.
+
+| Side | Top |
+|---|---|
+| ![Side](docs/img/prot7_lado.png) | ![Top](docs/img/prot7_cima.png) |
+
+### `preset_prot8` full box
+
+The simulated system as a whole.
+
+```
+preset_prot8
+```
+
+| Element | Representation |
+|---|---|
+| Protein | molecular surface |
+| Colour | formal charge |
+| Water | surface at transparency 0.72, inflated oxygen radius |
+| Ions | opaque core with a translucent solvation shell |
+| Ligands | sticks, radius 0.22 |
+
+Illustrates box dimensions and the solute to solvent ratio. It does not serve to analyse the protein: the solvent volume covers it by construction.
+
+| Side | Top |
+|---|---|
+| ![Side](docs/img/prot8_lado.png) | ![Top](docs/img/prot8_cima.png) |
+
+### `preset_prot9` simulation box, measured
+
+Box dimensions.
+
+```
+preset_prot9
+```
+
+| Element | Representation |
+|---|---|
+| Protein | molecular surface |
+| Colour | formal charge |
+| Water | gaussian field at transparency 0.82 |
+| Ions | spheres, scale 0.45 |
+| Box | twelve edges drawn as lines, from the extent of what is loaded |
+
+The box comes from the extent of the loaded system rather than a CRYST1 record, which MD frames often lack. It prints the dimensions to the log, ready for the caption.
+
+| Side | Top |
+|---|---|
+| ![Side](docs/img/prot9_lado.png) | ![Top](docs/img/prot9_cima.png) |
+
+### `preset_prot10` interface in licorice
+
+Where two chains, or protein and ligand, touch.
+
+```
+preset_prot10
+```
+
+| Element | Representation |
+|---|---|
+| Protein | cartoon at transparency 0.72, side chain helper on |
+| Colour | secondary structure |
+| Contacts | side chains in opaque sticks, radius 0.20 |
+| Contact colour | carbon by residue class, everything else by element |
+| Ligands | sticks, radius 0.24, own carbon colour |
+| Water | off |
+
+With more than two chains it shows the pair with the largest contact and hides the rest: a tetramer puts three different interfaces in one frame and none of them reads. Takes the pair: `preset_prot10 cadeias=A C`. Surface is the wrong representation here, because a closed surface hides the contact area, which sits between the two parts.
+
+| Side | Top |
+|---|---|
+| ![Side](docs/img/prot10_lado.png) | ![Top](docs/img/prot10_cima.png) |
+
+## Membrane presets
+
+Ten presets, rendered below from `memb/bilbo_preview.pdb`: a mixed bilayer of
+six lipid species plus cardiolipin, 64k atoms, written with a zero B column,
+which is what a molecular dynamics frame looks like. The `paper` argument works
+the same way here.
+
+```
+load memb/bilbo_preview.pdb
+run /path/to/pymol-molviz/molviz.pml
+```
+
+### `preset_memb1` stratified spheres
+
+General reading, layer organization.
+
+```
+preset_memb1
+```
+
+| Element | Representation |
+|---|---|
+| Lipid | spheres, scale 0.55, heads at 0.66 |
+| Colour | one per chemical moiety: head, phosphate, glycerol, tail |
+| Ions | opaque spheres, scale 0.5 |
+| Water | molecular surface at transparency 0.62 |
+
+The gap between spheres is what preserves the distinction between the four layers, which a full spacefill erases.
+
+| Side | Top |
+|---|---|
+| ![Side](docs/img/memb1_lado.png) | ![Top](docs/img/memb1_cima.png) |
+
+### `preset_memb2` solid spacefill
+
+Occupied volume, the barrier.
+
+```
+preset_memb2
+```
+
+| Element | Representation |
+|---|---|
+| Lipid | spheres at van der Waals radius, scale 1.0 |
+| Colour | one per leaflet |
+| Ions | spheres at real radius, consistent with the lipid |
+| Water | molecular surface at transparency 0.78 |
+
+Shows occupied volume and packing. Internal organization disappears by construction: what you see is the barrier.
+
+| Side | Top |
+|---|---|
+| ![Side](docs/img/memb2_lado.png) | ![Top](docs/img/memb2_cima.png) |
+
+### `preset_memb3` licorice with highlighted ions
+
+Ion to polar head interaction.
+
+```
+preset_memb3
+```
+
+| Element | Representation |
+|---|---|
+| Lipid | sticks, radius 0.30, heads as spheres at 0.45 |
+| Colour | one per chemical moiety |
+| Ions | opaque core with a translucent shell at 0.72, suggesting solvation |
+| Water | translucent spheres, scale 0.35 |
+
+Licorice lets the tail conformation show, which spacefill hides.
+
+| Side | Top |
+|---|---|
+| ![Side](docs/img/memb3_lado.png) | ![Top](docs/img/memb3_cima.png) |
+
+### `preset_memb4` ghost bilayer
+
+Inserted peptide.
+
+```
+preset_memb4
+```
+
+| Element | Representation |
+|---|---|
+| Lipid | molecular surface at transparency 0.58 over thin sticks, radius 0.16 |
+| Colour | one per chemical moiety |
+| Ions | spheres with an inflated mesh, radius 3.0 |
+| Water | off, deliberately |
+| Protein | shown if present |
+
+Preserves the membrane outline without hiding what is inside it. The water is off on purpose: the solvent surface would cover the object of interest.
+
+| Side | Top |
+|---|---|
+| ![Side](docs/img/memb4_lado.png) | ![Top](docs/img/memb4_cima.png) |
+
+### `preset_memb5` continuous hydrophobic core
+
+Illustration, large systems.
+
+```
+preset_memb5
+```
+
+| Element | Representation |
+|---|---|
+| Lipid | tails as a single gaussian isosurface, heads and phosphates as spheres at 0.75 |
+| Colour | tail orange, head green, phosphate amber |
+| Ions | opaque spheres, scale 0.85 |
+| Water | continuous gaussian field |
+
+Replaces thousands of tail atoms with one smooth surface. Lightest preset for large systems and the closest to scientific illustration. The isolevel comes from the map histogram, not a fixed value, and it falls back to thin sticks if the map comes out empty.
+
+| Side | Top |
+|---|---|
+| ![Side](docs/img/memb5_lado.png) | ![Top](docs/img/memb5_cima.png) |
+
+### `preset_memb6` fast navigation
+
+Not a figure.
+
+```
+preset_memb6
+```
+
+| Element | Representation |
+|---|---|
+| Lipid | lines, width 1.2 |
+| Colour | one per lipid species |
+| Ions | dots |
+| Water | off |
+| Ambient occlusion | off |
+
+Exists because ray tracing and ambient occlusion make rotation unusable on a large system. Frame the scene here, then apply an expensive preset.
+
+| Side | Top |
+|---|---|
+| ![Side](docs/img/memb6_lado.png) | ![Top](docs/img/memb6_cima.png) |
+
+### `preset_memb7` cross-section
+
+The bilayer interior.
+
+```
+preset_memb7
+```
+
+| Element | Representation |
+|---|---|
+| Lipid | central slab in spacefill, scale 1.0 |
+| Colour | one per chemical moiety, exposed on the cut face |
+| Ions | spheres within 8 A of the slab |
+| Water | off |
+| Camera | along the cut axis |
+
+The cut is a coordinate selection, not the camera clipping plane, so rotating afterwards does not change what is exposed. Takes the axis: `preset_memb7 0` for x, `1` for y, `2` for z.
+
+| Side | Top |
+|---|---|
+| ![Side](docs/img/memb7_lado.png) | ![Top](docs/img/memb7_cima.png) |
+
+### `preset_memb8` annular lipids
+
+Protein to lipid contact.
+
+```
+preset_memb8
+```
+
+| Element | Representation |
+|---|---|
+| Lipid in contact | licorice, radius 0.24, opaque |
+| Rest of the bilayer | sticks, radius 0.10, transparency 0.72 |
+| Colour | contacts by moiety, the rest neutral grey |
+| Ions | small spheres, scale 0.4 |
+| Water | off |
+
+Answers which lipids touch the protein. Needs a protein in the session, and takes the contact radius: `preset_memb8 7.0`.
+
+| Side | Top |
+|---|---|
+| ![Side](docs/img/memb8_lado.png) | ![Top](docs/img/memb8_cima.png) |
+
+### `preset_memb9` separated leaflets
+
+Leaflet asymmetry and thickness.
+
+```
+preset_memb9
+```
+
+| Element | Representation |
+|---|---|
+| Upper leaflet | molecular surface at transparency 0.45 |
+| Lower leaflet | molecular surface, second colour |
+| Phosphates | spheres, scale 0.55, marking both planes |
+| Ions | spheres, scale 0.5 |
+| Water | off |
+
+The two surfaces let the separation between the phosphate planes be read by eye, and a composition difference between leaflets shows up as a volume difference. The midplane comes from the mean z of the phosphates.
+
+| Side | Top |
+|---|---|
+| ![Side](docs/img/memb9_lado.png) | ![Top](docs/img/memb9_cima.png) |
+
+### `preset_memb10` two colours, for print
+
+Reduction to one column, black and white.
+
+```
+preset_memb10
+```
+
+| Element | Representation |
+|---|---|
+| Lipid tails | gaussian isosurface, dark |
+| Heads and phosphates | spheres, scale 0.8, light |
+| Ions | off |
+| Water | off |
+
+Two colours only, separated by lightness rather than hue, and nothing secondary competing for attention. Everything that is not the bilayer leaves the scene.
+
+| Side | Top |
+|---|---|
+| ![Side](docs/img/memb10_lado.png) | ![Top](docs/img/memb10_cima.png) |
 
 ## Colour, water and ions
 
@@ -251,30 +644,23 @@ and puts the originals back on the way out. PyMOL has no grayscale setting, so
 a gradient applied by `spectrum` stays coloured and the log says how many
 colours it could not reach.
 
-## Gallery
+## Rebuilding the images
 
-[`docs/gallery.md`](docs/gallery.md) shows all twenty presets from the side and
-from the top, rendered from the two systems in this repository, with the
-command line under every image.
-
-```
-load prot/4hhb.pdb
-load memb/bilbo_preview.pdb
-```
-
-`prot/4hhb.pdb` is haemoglobin from the RCSB: four chains, four haems, 221
-waters. `memb/bilbo_preview.pdb` is a mixed bilayer of six lipid species plus
-cardiolipin, 64k atoms, written with a zero B column, which is what a molecular
-dynamics frame looks like.
-
-To rebuild the images after changing a preset:
+The figures above come from the two systems in this repository. To regenerate
+them after changing a preset:
 
 ```
 /Applications/PyMOL.app/Contents/MacOS/PyMOL -cq tests/make_gallery.py
 ```
 
-It skips what already exists in `docs/img`, so it can be interrupted and
-resumed.
+It renders each preset from the side and from the top, in orthoscopic
+projection, and skips what already exists in `docs/img`, so it can be
+interrupted and resumed. Delete the files you want redone.
+
+Framing is set per system, because the two shapes are different: a bilayer is
+wide and thin and fills the width of the frame, so it takes a 6 A margin, while
+a globular protein takes 3 A or it would come out too small to show detail.
+Both use `complete=1`, which is what guarantees the geometry is not clipped.
 
 ## Tests
 
@@ -293,7 +679,6 @@ Written in Portuguese.
 | File | Content |
 |---|---|
 | [`docs/passo-a-passo.md`](docs/passo-a-passo.md) | Numbered flows, command by command. Start here. |
-| [`docs/gallery.md`](docs/gallery.md) | Every preset in three orientations, with the command that produces it. |
 | [`docs/presets.md`](docs/presets.md) | What each preset shows and which question it answers. |
 | [`docs/limitacoes.md`](docs/limitacoes.md) | PyMOL limitations and common problems, with cause and fix. |
 | [`docs/adaptacao.md`](docs/adaptacao.md) | Where to edit for another force field, scale or new preset. |
