@@ -2,6 +2,7 @@ __pycache__/
 *.pyc
 *.pse
 *.png
+!docs/img/*.png
 .DS_Store
 ._*
 .AppleDouble

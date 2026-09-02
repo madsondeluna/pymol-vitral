@@ -251,6 +251,31 @@ and puts the originals back on the way out. PyMOL has no grayscale setting, so
 a gradient applied by `spectrum` stays coloured and the log says how many
 colours it could not reach.
 
+## Gallery
+
+[`docs/gallery.md`](docs/gallery.md) shows all twenty presets in three
+orientations each, rendered from the two systems in this repository, with the
+command line under every image.
+
+```
+load prot/4hhb.pdb
+load memb/bilbo_preview.pdb
+```
+
+`prot/4hhb.pdb` is haemoglobin from the RCSB: four chains, four haems, 221
+waters. `memb/bilbo_preview.pdb` is a mixed bilayer of six lipid species plus
+cardiolipin, 64k atoms, written with a zero B column, which is what a molecular
+dynamics frame looks like.
+
+To rebuild the images after changing a preset:
+
+```
+/Applications/PyMOL.app/Contents/MacOS/PyMOL -cq tests/make_gallery.py
+```
+
+It skips what already exists in `docs/img`, so it can be interrupted and
+resumed.
+
 ## Tests
 
 ```
@@ -268,6 +293,7 @@ Written in Portuguese.
 | File | Content |
 |---|---|
 | [`docs/passo-a-passo.md`](docs/passo-a-passo.md) | Numbered flows, command by command. Start here. |
+| [`docs/gallery.md`](docs/gallery.md) | Every preset in three orientations, with the command that produces it. |
 | [`docs/presets.md`](docs/presets.md) | What each preset shows and which question it answers. |
 | [`docs/limitacoes.md`](docs/limitacoes.md) | PyMOL limitations and common problems, with cause and fix. |
 | [`docs/adaptacao.md`](docs/adaptacao.md) | Where to edit for another force field, scale or new preset. |
