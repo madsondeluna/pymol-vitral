@@ -200,7 +200,7 @@ preset_memb5
 
 | side | top | oblique |
 |---|---|---|
-| _(pending)_ | _(pending)_ | _(pending)_ |
+| ![preset_memb5 lado](img/memb5_lado.png) | ![preset_memb5 topo](img/memb5_topo.png) | ![preset_memb5 obliqua](img/memb5_obliqua.png) |
 
 ### `preset_memb6`
 
@@ -212,7 +212,7 @@ preset_memb6
 
 | side | top | oblique |
 |---|---|---|
-| _(pending)_ | _(pending)_ | _(pending)_ |
+| ![preset_memb6 lado](img/memb6_lado.png) | ![preset_memb6 topo](img/memb6_topo.png) | ![preset_memb6 obliqua](img/memb6_obliqua.png) |
 
 ### `preset_memb7`
 
@@ -224,7 +224,7 @@ preset_memb7
 
 | side | top | oblique |
 |---|---|---|
-| _(pending)_ | _(pending)_ | _(pending)_ |
+| ![preset_memb7 lado](img/memb7_lado.png) | ![preset_memb7 topo](img/memb7_topo.png) | ![preset_memb7 obliqua](img/memb7_obliqua.png) |
 
 ### `preset_memb8`
 
@@ -236,7 +236,7 @@ preset_memb8
 
 | side | top | oblique |
 |---|---|---|
-| _(pending)_ | _(pending)_ | _(pending)_ |
+| ![preset_memb8 lado](img/memb8_lado.png) | ![preset_memb8 topo](img/memb8_topo.png) | ![preset_memb8 obliqua](img/memb8_obliqua.png) |
 
 ### `preset_memb9`
 
