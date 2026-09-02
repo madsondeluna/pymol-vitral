@@ -1,125 +1,159 @@
 # pymol-molviz
 
-Presets de visualizacao para PyMOL, voltados a sistemas de simulacao molecular:
-membranas lipidicas, proteinas e peptideos.
+Visualization presets for PyMOL, aimed at molecular simulation systems: lipid
+bilayers, proteins and peptides. The package splits the loaded system into
+independent objects, applies a calibrated material and exposes numbered presets
+that combine one representation per component.
 
-O pacote divide o sistema carregado em objetos independentes, aplica um material
-calibrado (plastico opaco, oclusao ambiente, fundo branco) e expoe presets
-numerados que combinam representacoes de cada componente. Um unico comando
-carrega tudo.
+Requirements: PyMOL 2.x, open-source or incentive. No external dependencies.
 
-## Instalacao
+## Install
 
-Nao ha instalacao. Clone ou descompacte o repositorio em qualquer lugar e, de
-dentro do PyMOL:
+There is none. Clone or unpack the repository anywhere and, from inside PyMOL:
 
 ```
-run /caminho/pymol-molviz/molviz.pml
+run /path/to/pymol-molviz/molviz.pml
 ```
 
-O arquivo descobre sozinho o diretorio do repositorio e registra os comandos.
-Para carregar em toda sessao, adicione a mesma linha ao `~/.pymolrc`.
+The entry point resolves its own directory, so the repository works from any
+location. Add the same line to `~/.pymolrc` to load it in every session.
 
-Requisitos: PyMOL 2.x, open-source ou incentive. Nenhuma dependencia externa.
+## Usage
 
-## Uso
-
-Carregue a estrutura primeiro, depois o pacote. Ele detecta o tipo de sistema e
-aplica um preset inicial: membrana se houver lipideos, proteina caso contrario.
+Load the structure first, then the package. It detects the system type and
+applies an initial preset: membrane if lipids are present, protein otherwise.
 
 ```
-load sistema.pdb
-run /caminho/pymol-molviz/molviz.pml
-```
-
-Depois e so trocar de preset:
-
-```
+load system.pdb
+run /path/to/pymol-molviz/molviz.pml
 preset_memb5
 memb_color leaflet
-mv_render figura.png, 2000, 1500, 300
+mv_render figure.png, 2000, 1500, 300
 ```
 
-Cada componente vira um objeto proprio no painel lateral (`obj_lipid`,
-`obj_wat`, `obj_ions`, `obj_prot`), com ponto de enable e botoes A/S/H/L/C para
-mostrar e ocultar com um clique.
+## Objects
 
-## Comandos
+The split produces one object per component, each with its own enable dot in
+the side panel.
 
-**Membranas** — `preset_memb1` a `preset_memb6`, `memb_color`, `memb_water`,
-`memb_split`, `memb_protein`
-
-**Proteinas** — `preset_prot1` a `preset_prot8`, `prot_color`, `prot_water`,
-`prot_ions`, `prot_split`, `prot_restore_b`, `prot_auto`
-
-**Comum** — `mv_material`, `mv_ao`, `mv_shadows`, `mv_realism`,
-`mv_desaturate`, `mv_paper`, `mv_grayscale`, `mv_extent`, `mv_render`
-
-## Documentacao
-
-| Arquivo | Conteudo |
+| Object | Content |
 |---|---|
-| [`docs/passo-a-passo.md`](docs/passo-a-passo.md) | Nove fluxos numerados, comando a comando. Comece por aqui. |
-| [`docs/presets.md`](docs/presets.md) | O que cada preset mostra e a que pergunta responde. |
-| [`docs/limitacoes.md`](docs/limitacoes.md) | Limitacoes do PyMOL e problemas comuns, com causa e solucao. |
-| [`docs/adaptacao.md`](docs/adaptacao.md) | Onde editar para outro force field, outra escala ou um preset novo. |
+| `obj_lipid` | lipids, subdivided into `lip_head`, `lip_phos`, `lip_glyc`, `lip_tail` |
+| `obj_prot` | protein or peptide |
+| `obj_wat` | water |
+| `obj_ions` | ions |
+| `obj_lig` | ligands |
+| `obj_nucl` | nucleic acid |
 
-## Estrutura
+## Membrane presets
+
+| Command | Lipid | Ions | Water |
+|---|---|---|---|
+| `preset_memb1` | spheres, scale 0.55, colored by chemical moiety | opaque spheres, scale 0.5 | translucent surface, 0.62 |
+| `preset_memb2` | spacefill at van der Waals radius, colored by leaflet | real radius | translucent surface, 0.78 |
+| `preset_memb3` | sticks, radius 0.30, heads as spheres | opaque core plus solvation shell | translucent spheres |
+| `preset_memb4` | translucent surface, 0.58, over thin sticks | spheres with inflated mesh | off |
+| `preset_memb5` | tails as a gaussian isosurface, heads as spheres | opaque spheres, scale 0.85 | gaussian field |
+| `preset_memb6` | lines, width 1.2, colored by species, no ambient occlusion | dots | off |
+
+`preset_memb5` is the lightest on large systems: it replaces thousands of tail
+atoms with a single isosurface. Its isolevel is derived from the map histogram,
+not fixed. `preset_memb6` is for navigation, not for figures.
+
+## Protein presets
+
+| Command | Representation | Color |
+|---|---|---|
+| `preset_prot1` | cartoon | secondary structure |
+| `preset_prot2` | cartoon under a translucent surface, 0.55 | secondary structure |
+| `preset_prot3` | solid surface, solvent radius 1.4 | Kyte-Doolittle gradient |
+| `preset_prot4` | spacefill at van der Waals radius | chain |
+| `preset_prot5` | putty, thickness 0.6 to 3.5 | B-factor |
+| `preset_prot6` | all-atom sticks, radius 0.20 | formal charge |
+| `preset_prot7` | cartoon plus water and ions within 4.0 A | secondary structure |
+| `preset_prot8` | surface inside the solvent volume | formal charge |
+
+`prot_auto` picks between `preset_prot1` and `preset_prot6` by residue count,
+with the cutoff at 60. `preset_prot3` writes to the B-factor column;
+`prot_restore_b` puts the original values back. `preset_prot5` reads the
+B-factor column as deposited, which inverts on predicted models carrying pLDDT.
+
+## Color, water and ions
+
+```
+memb_color   moiety | leaflet | type | depth
+memb_water   off | surface | spheres | field
+prot_color   ss | chain | charge | hydro | bfactor | rainbow
+prot_water   off | shell | spheres | surface | field
+prot_ions    off | spheres | vdw | halo | mesh | shell
+```
+
+`shell` exists in the protein module only. It shows water or ions within a
+radius of the solute, selected by `byres`.
+
+## Material, lighting and output
+
+```
+mv_material
+mv_ao          off | soft | medium | strong | extreme
+mv_shadows     off | soft | medium | hard
+mv_realism     studio | depth | dramatic | flat
+mv_desaturate  0.18
+mv_paper       85
+mv_grayscale   1
+mv_extent      obj_lipid
+mv_render      figure.png, 2000, 1500, 300
+```
+
+Each level sets several parameters at once. `mv_realism` overrides
+`mv_shadows`, which overrides `mv_ao`: apply them from general to specific.
+`mv_paper` takes a column width in millimetres, turns off cast shadows, sets
+orthoscopic projection and prints the target resolution.
+
+## Other commands
+
+`memb_split`, `memb_protein`, `memb_prepare`, `prot_split`, `prot_prepare`,
+`prot_auto`, `prot_restore_b`.
+
+## Documentation
+
+Written in Portuguese.
+
+| File | Content |
+|---|---|
+| [`docs/passo-a-passo.md`](docs/passo-a-passo.md) | Numbered flows, command by command. Start here. |
+| [`docs/presets.md`](docs/presets.md) | What each preset shows and which question it answers. |
+| [`docs/limitacoes.md`](docs/limitacoes.md) | PyMOL limitations and common problems, with cause and fix. |
+| [`docs/adaptacao.md`](docs/adaptacao.md) | Where to edit for another force field, scale or new preset. |
+| [`docs/decisoes.md`](docs/decisoes.md) | Design decisions and the constraint behind each one. |
+
+## Layout
 
 ```
 pymol-molviz/
-├── molviz.pml              # ponto de entrada
+├── molviz.pml              # entry point
 ├── pymol_molviz/
-│   ├── __init__.py         # registro dos comandos e deteccao do sistema
-│   ├── core.py             # paleta, material, iluminacao, saida
-│   ├── membrane.py         # seis presets de membrana
-│   └── protein.py          # oito presets de proteina
+│   ├── __init__.py         # command registration and system detection
+│   ├── core.py             # palette, material, lighting, output
+│   ├── membrane.py         # six membrane presets
+│   └── protein.py          # eight protein presets
 ├── docs/
-├── examples/               # sequencias prontas, executaveis com @
-└── legacy/                 # scripts anteriores, sem manutencao
+├── examples/               # ready sequences, run with @
+└── legacy/                 # earlier scripts, unmaintained
 ```
 
-`core.py` concentra o que os dois modulos compartilham: material, oclusao
-ambiente, sombras, modo periodico e exportacao. `membrane.py` e `protein.py`
-contem apenas o que e especifico de cada dominio.
-
-## Exemplos
-
-Sequencias completas, executaveis direto:
+## Examples
 
 ```
-@/caminho/pymol-molviz/examples/figura_membrana.pml
-@/caminho/pymol-molviz/examples/figura_peptideo.pml
-@/caminho/pymol-molviz/examples/md_solvatada.pml
-@/caminho/pymol-molviz/examples/diagnostico.pml
+@/path/to/pymol-molviz/examples/figura_membrana.pml
+@/path/to/pymol-molviz/examples/figura_peptideo.pml
+@/path/to/pymol-molviz/examples/md_solvatada.pml
+@/path/to/pymol-molviz/examples/diagnostico.pml
 ```
 
-O ultimo nao desenha nada: lista residuos, nomes de atomo e a razao atomos por
-residuo, para descobrir a nomenclatura de um sistema desconhecido.
+`diagnostico.pml` draws nothing. It lists residue names, atom names and the
+atoms per residue ratio, to identify the nomenclature of an unknown system.
 
-## Decisoes de projeto
-
-**Selecoes por criterio quimico, nao por nome de atomo.** A nomenclatura varia
-entre CHARMM, Berger, Slipids e Martini; a topologia nao. As camadas de um
-lipideo sao definidas por elemento e conectividade, e o modulo cai para nomes
-Martini apenas quando detecta um sistema coarse-grained.
-
-**Objetos, nao selecoes.** Selecao serve para aplicar comandos; objeto tem
-ponto de enable proprio. A divisao em objetos e o que permite mostrar e ocultar
-componentes com um clique.
-
-**Nivel de isosuperficie derivado do histograma.** Um nivel fixo falha em
-silencio quando a resolucao gaussiana muda: o `isosurface` nao gera triangulo
-nenhum, e objeto vazio nao e registrado pelo PyMOL.
-
-**Fatores B preservados.** Colorir por hidrofobicidade exige escrever na coluna
-B, ja que o PyMOL nao tem campo generico por atomo para gradiente. Os valores
-originais sao salvos no split e `prot_restore_b` os devolve.
-
-**Um material, varios niveis.** Oclusao ambiente e sombra projetada competem
-pelo mesmo orcamento de luz, entao os comandos de ajuste alteram varios
-parametros em conjunto em vez de expor cada um isoladamente.
-
-## Licenca
+## License
 
 MIT.

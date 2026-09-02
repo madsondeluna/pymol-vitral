@@ -1,297 +1,310 @@
 # Passo a passo
 
-Guia de execucao. Cada fluxo e uma sequencia numerada de comandos, na ordem em
-que devem ser digitados na linha de comando do PyMOL.
+Guia de execução. Cada fluxo é uma sequência de comandos, na ordem em que devem
+ser digitados na linha de comando do PyMOL. As linhas iniciadas por `#` são
+comentário e o PyMOL as ignora, então copiar a linha do comentário junto com a
+do comando é inofensivo.
 
-Para a referencia completa dos presets, ver `docs/presets.md`. Para as
-limitacoes do PyMOL que afetam o resultado, ver `docs/limitacoes.md`.
+Copie uma linha por vez. A barra de comando da interface Qt é de linha única, e
+uma colagem de várias linhas vira um comando só. Para rodar um bloco inteiro,
+salve num arquivo `.pml` e chame com `@arquivo.pml`.
 
-Substitua `/caminho/pymol-molviz/` pelo local real do repositorio em todos os
-exemplos.
+Comentário no fim de uma linha de comando não funciona. `set sphere_scale, 0.55
+# nota` faz o PyMOL tentar converter `0.55 # nota` em número e falhar. Por isso
+a explicação vem sempre na linha de cima.
 
-Um unico comando carrega tudo, membranas e proteinas:
+Substitua `/caminho/pymol-molviz/` pelo local real do repositório.
 
-```
-run /caminho/pymol-molviz/molviz.pml
-```
+Para a referência completa, ver `presets.md`. Para os problemas conhecidos, ver
+`limitacoes.md`.
 
----
+## Fluxo 1. Membrana, escolhendo o preset
 
-## Fluxo 1 — Visualizar uma membrana
-
-**1. Abrir o PyMOL e carregar a estrutura.**
-Pelo menu `File > Open`, ou pela linha de comando:
+Carregue a estrutura antes do script. A ordem importa: o script divide o que já
+estiver na sessão.
 
 ```
 load /caminho/membrana.pdb
-```
-
-**2. Carregar a biblioteca.**
-
-```
 run /caminho/pymol-molviz/molviz.pml
 ```
 
-Ele divide o sistema, aplica o `preset_memb1` e imprime as contagens. A ordem
-importa: carregue a estrutura antes do script.
+Ele aplica o `preset_memb1` e imprime as contagens. Procure a linha que começa
+com `[membrane]`. Se `obj_lipid` vier com zero átomos, a lista de resíduos não
+cobre o seu sistema: pule para o Fluxo 6.
 
-**3. Conferir as contagens no log.**
-Procure a linha que comeca com `[membrane]`. Se `obj_lipid` vier com zero
-atomos, a lista de residuos nao cobre o seu sistema — pule para o Fluxo 6.
-
-**4. Testar os presets.**
+Os seis presets, um por vez. Cada um responde a uma pergunta diferente:
 
 ```
+# Leitura geral. Esferas com folga, uma cor por camada química: cabeça,
+# fosfato, glicerol, cauda. A folga é o que preserva a distinção que o
+# spacefill cheio apaga. Água em superfície translúcida.
 preset_memb1
+
+# Volume ocupado e empacotamento. Raio de van der Waals real, uma cor por
+# folheto. A organização interna some por construção: o que se vê é a barreira.
 preset_memb2
+
+# Interação íon com cabeça polar. Licorice deixa ver a conformação das caudas,
+# e os íons ganham núcleo opaco com casca de solvatação. Água em esferas.
 preset_memb3
+
+# Peptídeo inserido. Superfície translúcida por fora, licorice fino por dentro,
+# então o contorno da membrana fica sem esconder o que está dentro dela.
+# A água fica desligada de propósito: a superfície do solvente cobriria o alvo.
 preset_memb4
+
+# Ilustração e sistema grande. As caudas viram uma isosuperfície gaussiana
+# única, no lugar de milhares de átomos. É o mais leve e o mais próximo da
+# estética de ilustração científica.
 preset_memb5
+
+# Navegação, não figura. Linhas, pontos, oclusão ambiente desligada. Existe
+# para girar e enquadrar a cena antes de aplicar um preset caro.
 preset_memb6
 ```
 
-**5. Trocar o esquema de cor, se quiser.**
+Trocar o esquema de cor, sem trocar de preset:
 
 ```
+# cabeça, fosfato, glicerol, cauda
+memb_color moiety
+
+# folheto superior contra folheto inferior
 memb_color leaflet
+
+# uma cor por espécie lipídica, para membrana mista
+memb_color type
+
+# gradiente contínuo na normal, para ver interdigitação
+memb_color depth
 ```
 
-**6. Enquadrar a cena** com o mouse, ou:
+Trocar o tratamento da água:
+
+```
+# previsível: infla o raio dos oxigênios e desenha a superfície molecular
+memb_water surface
+
+# esferas individuais
+memb_water spheres
+
+# campo gaussiano contínuo, exige calibrar o nível
+memb_water field
+
+memb_water off
+```
+
+Enquadrar, conferir o material e alternar componentes:
 
 ```
 orient obj_lipid
 zoom obj_lipid, 3
-```
 
-**7. Ver o material real.**
-O viewport nao mostra o modelo especular nem o antialiasing.
-
-```
+# o viewport não mostra especular nem antialiasing
 ray 1600, 1200
-```
 
-**8. Mostrar ou ocultar componentes.**
-Clique no ponto ao lado de `obj_wat`, `obj_ions` ou `obj_lipid` no painel
-lateral. Ou por comando:
-
-```
 disable obj_wat
 enable obj_wat
 ```
 
----
-
-## Fluxo 2 — Visualizar uma proteina
-
-**1. Carregar a estrutura.**
+## Fluxo 2. Proteína, escolhendo o preset
 
 ```
 load /caminho/proteina.pdb
-```
-
-**2. Carregar a biblioteca.**
-
-```
 run /caminho/pymol-molviz/molviz.pml
 ```
 
-Ele decide o preset inicial pelo tamanho: abaixo de 60 residuos abre em
-all-atom por carga, acima abre em cartoon.
+O preset inicial sai do tamanho: abaixo de 60 resíduos abre em all-atom por
+carga, acima abre em cartoon. Na linha `[prot]` do log estão os objetos criados
+e o número de resíduos. Se aparecer `estrutura secundaria atribuida com dss`, o
+arquivo não trazia registros HELIX e SHEET e o script os calculou.
 
-**3. Conferir o log.**
-A linha `[prot]` traz os objetos criados e o numero de residuos. Se aparecer
-`estrutura secundaria atribuida com dss`, o arquivo nao tinha registros
-HELIX/SHEET e o script os calculou.
-
-**4. Testar os presets.**
+Os oito presets:
 
 ```
+# Topologia de domínio. Hélice azul, folha vermelha, alça branca. É o único que
+# comunica topologia global. Cartoon não recebe oclusão ambiente no PyMOL, então
+# esta é a cena com menos relevo do conjunto.
 preset_prot1
+
+# Sítio de ligação. Mesmo cartoon, com superfície translúcida por fora: o
+# ligante continua visível por dentro, o que uma superfície opaca impediria.
 preset_prot2
+
+# Face de interação e anfipaticidade. Superfície sólida com gradiente
+# Kyte-Doolittle. Recebe oclusão ambiente, então é a cena com mais relevo.
+# Escreve na coluna B; prot_restore_b desfaz.
 preset_prot3
+
+# Arquitetura de complexo. Spacefill, uma cor por cadeia.
 preset_prot4
+
+# Flexibilidade. Putty: a espessura codifica o fator B, região flexível fica
+# grossa e vermelha. Vale para estrutura experimental. Em modelo predito a
+# coluna B costuma trazer pLDDT, cuja escala significa o oposto.
 preset_prot5
+
+# Peptídeos. All-atom licorice colorido por carga, que expõe a anfipaticidade
+# direto na cadeia lateral. Acima de 60 resíduos vira massa ilegível, e o
+# comando avisa no log quando é o caso.
+preset_prot6
+
+# Caixa de dinâmica molecular. Cartoon mais a água a 4 A e os íons a 6 A da
+# proteína. Descarta o solvente de bulk, que numa caixa típica passa de 90%
+# dos átomos e esconde o soluto.
+preset_prot7
+
+# Ilustrar o sistema simulado inteiro: dimensão da caixa, proporção entre
+# soluto e solvente. Não serve para analisar a proteína, porque o volume de
+# solvente a cobre por construção.
+preset_prot8
 ```
 
-**5. Trocar o esquema de cor.**
+Esquemas de cor:
 
 ```
-prot_color charge
-prot_color hydro
+# estrutura secundária
+prot_color ss
+
+# uma cor por cadeia
 prot_color chain
+
+# básicos azul, ácidos vermelho, polares claros, apolares amarelo
+prot_color charge
+
+# gradiente Kyte-Doolittle, sobrescreve a coluna B
+prot_color hydro
+
+# fator B como está no arquivo
+prot_color bfactor
+
+# gradiente do N para o C terminal
+prot_color rainbow
+
+# devolve os fatores B originais depois de hydro
+prot_restore_b
 ```
 
-**6. Renderizar.**
+Solvente e íons:
 
 ```
-ray 1600, 1200
+# só a água dentro do raio, selecionada por byres para não exibir meia molécula
+prot_water shell, 4.0
+
+prot_water spheres
+prot_water surface
+prot_water off
+
+# só os íons dentro do raio
+prot_ions shell, 6.0
+
+# núcleo opaco com casca translúcida
+prot_ions halo
+
+# malha, marca a posição sem ocultar o que está atrás
+prot_ions mesh
+
+prot_ions off
 ```
 
----
+## Fluxo 3. Peptídeo, com foco na anfipaticidade
 
-## Fluxo 3 — Peptideo, com foco na anfipaticidade
-
-Para peptideos antimicrobianos e outros peptideos curtos, onde a informacao
-esta na cadeia lateral e nao na topologia global.
-
-**1. Carregar o peptideo.**
+Para peptídeos antimicrobianos e outros peptídeos curtos, onde a informação
+está na cadeia lateral e não na topologia global.
 
 ```
 load /caminho/peptideo.pdb
-```
-
-**2. Carregar a biblioteca.**
-
-```
 run /caminho/pymol-molviz/molviz.pml
 ```
 
-Abaixo de 60 residuos ele ja abre no `preset_prot6`.
-
-**3. Ver a segregacao de carga.**
+Abaixo de 60 resíduos ele já abre no `preset_prot6`.
 
 ```
+# segregação de carga: azul básicos, vermelho ácidos, amarelo apolares,
+# azul claro polares
 preset_prot6
-```
 
-Azul sao basicos, vermelho acidos, amarelo apolares, azul claro polares.
-
-**4. Comparar com a superficie de hidrofobicidade.**
-
-```
+# a mesma pergunta pela superfície de hidrofobicidade
 preset_prot3
 ```
 
-Se as duas faces se separam nos dois esquemas, a anfipaticidade e real; se
-so aparece em um, vale investigar antes de afirmar.
+Se as duas faces se separam nos dois esquemas, a anfipaticidade é real. Se
+aparece em um só, vale investigar antes de afirmar.
 
-**5. Girar para achar a face.**
-Arraste com o botao esquerdo. Para alinhar o eixo da helice na horizontal:
+Alinhar o eixo da hélice na horizontal e renderizar as duas faces:
 
 ```
 orient obj_prot
 turn x, 90
-```
-
-**6. Renderizar as duas vistas** para comparar lado a lado:
-
-```
 mv_render face_a.png, 1200, 900
 turn y, 180
 mv_render face_b.png, 1200, 900
 ```
 
----
+## Fluxo 4. Proteína solvatada, saída de dinâmica molecular
 
-## Fluxo 4 — Proteina solvatada, saida de dinamica molecular
-
-**1. Corrigir a imagem periodica antes de abrir o PyMOL.**
-No terminal, com o GROMACS:
+Corrija a imagem periódica antes de abrir o PyMOL. Sem isso a proteína pode
+estar partida entre bordas da caixa, e a camada de solvatação sai vazia ou
+errada. No terminal, com o GROMACS:
 
 ```
 gmx trjconv -s topol.tpr -f traj.xtc -o frame.pdb -pbc mol -center -dump 0
 ```
 
-Sem isso, a proteina pode estar partida entre bordas da caixa, e a camada de
-solvatacao sai vazia ou errada.
-
-**2. Carregar o frame.**
+Depois:
 
 ```
 load /caminho/frame.pdb
-```
-
-**3. Carregar a biblioteca.**
-
-```
 run /caminho/pymol-molviz/molviz.pml
-```
 
-**4. Aplicar o preset de sistema solvatado.**
-
-```
+# água a 4 A e íons a 6 A da proteína, o resto do solvente oculto
 preset_prot7
-```
 
-Ele mostra so a agua a 4 A da proteina e os ions a 6 A. O resto do solvente e
-bulk e fica oculto.
-
-**5. Ajustar o raio da camada, se necessario.**
-
-```
+# aumentar a camada, se ela vier fina demais
 prot_water shell, 6.0
 prot_ions shell, 8.0
-```
 
-**6. Se a camada vier vazia**, o log avisa. A causa quase sempre e imagem
-periodica; volte ao passo 1.
-
-**7. Para ilustrar a caixa inteira** em vez de analisar a proteina:
-
-```
+# para ilustrar a caixa inteira, em vez de analisar a proteína
 preset_prot8
 ```
 
----
+Se a camada vier vazia, o log avisa. A causa quase sempre é imagem periódica:
+volte ao `trjconv`.
 
-## Fluxo 5 — Preparar uma figura para artigo
-
-**1. Escolher e aplicar o preset** que responde a pergunta da figura.
+## Fluxo 5. Preparar uma figura para artigo
 
 ```
 preset_memb5
 ```
 
-**2. Enquadrar com cuidado.**
-Este e o passo que mais afeta o resultado e o unico que nenhum script faz por
-voce. Gire, aproxime e centralize ate a figura comunicar o ponto sozinha.
-
-**3. Trocar para o modo periodico.**
+Enquadre com cuidado. É o passo que mais afeta o resultado e o único que nenhum
+script faz por você. Gire, aproxime e centralize até a figura comunicar o ponto
+sozinha.
 
 ```
+# 85 para coluna simples, 170 para largura dupla. Imprime no log a resolução
+# alvo em pixels e a linha de render já pronta.
 mv_paper 85
-```
 
-Use 85 para coluna simples, 170 para largura dupla. Ele imprime no log a
-resolucao alvo em pixels e a linha de render pronta.
-
-**4. Testar em escala de cinza.**
-
-```
+# teste de impressão em preto e branco, obrigatório
 mv_grayscale 1
 ray 1000, 750
-```
-
-Se duas cores colapsarem no mesmo tom, diferencie por claridade e nao apenas
-por matiz. Depois:
-
-```
 mv_grayscale 0
-```
 
-**5. Pegar as dimensoes para a legenda.**
-
-```
+# dimensões da cena, para a legenda
 mv_extent obj_lipid
-```
 
-**6. Renderizar na resolucao final.**
-Use os numeros que o passo 3 imprimiu:
-
-```
+# resolução final, com os números que mv_paper imprimiu
 mv_render figura.png, 1004, 753, 300
 ```
 
-**7. Conferir o arquivo** antes de submeter: fundo branco, sem corte nas
-bordas, texto da legenda coerente com as dimensoes medidas.
+Se duas cores colapsarem no mesmo tom na escala de cinza, diferencie por
+claridade, não apenas por matiz. Antes de submeter, confira o arquivo: fundo
+branco, sem corte nas bordas, legenda coerente com as dimensões medidas.
 
----
+## Fluxo 6. Sistema com nomenclatura desconhecida
 
-## Fluxo 6 — Sistema com nomenclatura desconhecida
-
-Quando `obj_lipid` vem vazio, ou quando as camadas nao recebem cor.
-
-**1. Listar os residuos presentes.**
+Quando `obj_lipid` vem vazio, ou quando as camadas não recebem cor.
 
 ```
 stored.r = {}
@@ -299,34 +312,27 @@ iterate all, stored.r[resn] = stored.r.get(resn, 0) + 1
 print(sorted(stored.r.items(), key=lambda kv: -kv[1])[:30])
 ```
 
-**2. Listar os nomes de atomo por residuo.**
-
 ```
 stored.n = {}
 iterate not polymer, stored.n.setdefault(resn, set()).add(name)
 print("\n".join("%s (%d): %s" % (k, len(v), " ".join(sorted(v))) for k, v in stored.n.items()))
 ```
 
-**3. Estimar se e coarse-grained.**
-Divida o numero de atomos de um lipideo pelo numero de moleculas dele. Perto
-de 12 e Martini; perto de 50 e all-atom.
+Divida o número de átomos de um lipídeo pelo número de moléculas dele. Perto de
+12 é Martini, perto de 50 é all-atom.
 
-**4. Editar o dicionario correspondente.**
-Em `pymol_molviz/membrane.py`, os dicionarios `LIPID_RESN` e `CG_NAMES` ficam
-no topo do arquivo. Adicione os residuos que apareceram no passo 1.
-
-**5. Recarregar.**
+Os dicionários `LIPID_RESN` e `CG_NAMES` ficam no topo de
+`pymol_molviz/membrane.py`. Adicione os resíduos que apareceram e recarregue:
 
 ```
 delete obj_*
 run /caminho/pymol-molviz/molviz.pml
 ```
 
----
+## Fluxo 7. Ajustar iluminação
 
-## Fluxo 7 — Ajustar iluminacao
-
-**1. Comecar pela oclusao ambiente**, que da o relevo de contato.
+Comece pela oclusão ambiente, que dá o relevo de contato. Rode `ray` depois de
+cada nível: o viewport mostra a oclusão, mas não o brilho especular.
 
 ```
 mv_ao soft
@@ -334,37 +340,27 @@ mv_ao medium
 mv_ao strong
 ```
 
-Rode `ray` depois de cada um para comparar. O viewport mostra a oclusao, mas
-nao o brilho especular.
-
-**2. Adicionar sombra projetada,** se a cena tiver um objeto destacado.
+Sombra projetada só aparece no `ray`, e em cena homogênea, como uma bicamada
+pura, tende a virar ruído. A maciez custa tempo: `soft` usa seis luzes, `hard`
+usa uma.
 
 ```
 mv_shadows soft
 ray 1600, 1200
 ```
 
-Sombras so aparecem no `ray`. Em cena homogenea, como uma bicamada pura, elas
-tendem a virar ruido — considere manter em `off`.
-
-**3. Ajustar o conjunto de uma vez,** se preferir.
+Para ajustar o conjunto de uma vez:
 
 ```
 mv_realism studio
 ```
 
-**4. Ordem importa.**
-`memb_shadows` sobrescreve `ambient` e `direct` definidos por `memb_ao`, e
-`memb_realism` sobrescreve os dois. Aplique do mais geral para o mais
-especifico.
+A ordem importa. `mv_realism` sobrescreve `mv_shadows`, que sobrescreve
+`mv_ao`. Aplique do mais geral para o mais específico.
 
----
+## Fluxo 8. Recomeçar do zero
 
-## Fluxo 8 — Recomecar do zero
-
-Quando a sessao acumulou objetos e selecoes de tentativas anteriores.
-
-**1. Limpar os objetos derivados.**
+Quando a sessão acumulou objetos e seleções de tentativas anteriores.
 
 ```
 delete obj_*
@@ -374,14 +370,14 @@ delete map_*
 delete surf_*
 ```
 
-**2. Reabilitar o objeto original.**
-Os scripts o desabilitam, nao deletam. No painel ele aparece esmaecido.
+O objeto original é desabilitado, não deletado: no painel ele aparece
+esmaecido.
 
 ```
 enable nome_do_objeto
 ```
 
-**3. Ou apagar tudo e recarregar.**
+Ou apague tudo e recarregue:
 
 ```
 delete all
@@ -389,29 +385,30 @@ load /caminho/estrutura.pdb
 run /caminho/pymol-molviz/molviz.pml
 ```
 
----
+## Fluxo 9. Carregar automaticamente em toda sessão
 
-## Fluxo 9 — Carregar automaticamente em toda sessao
-
-**1. Criar ou editar o `~/.pymolrc`.**
-No terminal:
+Uma linha em `~/.pymolrc` registra os comandos em toda sessão. O arquivo fica
+no seu home, fora do repositório, e é onde moram os caminhos desta máquina.
 
 ```
 nano ~/.pymolrc
 ```
 
-**2. Adicionar as linhas:**
+Conteúdo:
 
 ```
 run /caminho/pymol-molviz/molviz.pml
-run /caminho/pymol-molviz/molviz.pml
 ```
 
-**3. Salvar** com Ctrl+O, Enter, Ctrl+X.
+Salve com Ctrl+O, Enter, Ctrl+X. Com a sessão vazia o script não altera nada,
+apenas imprime que não há estrutura carregada.
 
-Os comandos passam a existir em toda sessao. Note que os scripts tambem tentam
-aplicar um preset ao carregar; com a sessao vazia isso e inofensivo, apenas
-imprime `nada carregado`.
+Atalhos para as sequências de `examples/` entram no mesmo arquivo, com o
+caminho já resolvido:
 
-Se preferir que nao apliquem nada automaticamente, mova os arquivos para uma
-pasta estavel (nao Downloads) e comente as duas ultimas linhas de cada um.
+```
+alias fig_membrana, @/caminho/pymol-molviz/examples/figura_membrana.pml
+alias fig_peptideo, @/caminho/pymol-molviz/examples/figura_peptideo.pml
+alias fig_md,       @/caminho/pymol-molviz/examples/md_solvatada.pml
+alias diagnostico,  @/caminho/pymol-molviz/examples/diagnostico.pml
+```

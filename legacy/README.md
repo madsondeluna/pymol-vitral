@@ -2,13 +2,13 @@
 
 Scripts anteriores ao pacote `pymol_molviz`, mantidos por dois motivos.
 
-`membrane_popc_style.pml` e um script linear, sem funcoes: aplica o mesmo
-estilo de cima a baixo, na ordem em que os comandos rodam. E mais facil de ler
-do que o pacote quando o objetivo e entender ou modificar o que acontece,
-porque as funcoes escondem a sequencia.
+`membrane_popc_style.pml` é um script linear, sem funções: aplica o mesmo estilo
+de cima a baixo, na ordem em que os comandos rodam. É mais fácil de ler do que o
+pacote quando o objetivo é entender ou modificar o que acontece, porque as
+funções escondem a sequência.
 
-`style_madson.pml` e `style_madson.py` sao o estilo geral fora do contexto de
-membrana ou de analise: proteina, acido nucleico e ligante, sem a divisao em
+`style_madson.pml` e `style_madson.py` são o estilo geral fora do contexto de
+membrana ou de análise: proteína, ácido nucleico e ligante, sem a divisão em
 objetos nem os presets.
 
-Nenhum deles recebe manutencao. Para uso normal, prefira o pacote.
+Nenhum deles recebe manutenção. Para uso normal, prefira o pacote.
