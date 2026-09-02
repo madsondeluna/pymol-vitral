@@ -570,6 +570,18 @@ def preset7(eixo=1, paper=0):
     _finish("preset_memb7: corte transversal no eixo %s" % "xyz"[int(eixo)],
             paper)
 
+    # A camera olha ao longo do eixo do corte, senao a face cortada fica de
+    # perfil e o corte nao aparece: a cena sai identica a bicamada inteira.
+    # 'reset' devolve a vista canonica (x direita, y cima, z para o
+    # observador), e a partir dela o giro que traz o eixo do corte para a
+    # linha de visao e fixo.
+    cmd.reset()
+    if int(eixo) == 0:
+        cmd.turn("y", 90)
+    elif int(eixo) == 1:
+        cmd.turn("x", 90)
+    cmd.zoom("lip_slab", 2)
+
 
 def preset8(raio=5.0, paper=0):
     """Lipideos anelares.
