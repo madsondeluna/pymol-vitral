@@ -387,6 +387,7 @@ def material(shadows=1, ao=1, hq=1):
 
     cmd.set("ambient_occlusion_mode", 1 if truthy(ao) else 0)
     cmd.set("ambient_occlusion_scale", 12)
+
     cmd.set("ambient_occlusion_smooth", 15)
 
     cmd.set("ray_shadow", 1 if truthy(shadows) else 0)
@@ -397,7 +398,19 @@ def material(shadows=1, ao=1, hq=1):
     cmd.set("ray_transparency_shadows", 0)
     cmd.set("ray_interior_shadows", 0)
     cmd.set("ray_trace_mode", 0)          # > 0 desenha contorno de ilustracao
-    cmd.set("ray_interior_color", "grey20")
+    # Interior de esfera ou superficie cortada pelo plano de recorte da camera.
+    # grey20, que era o valor aqui e e o padrao do PyMOL, sai como manchas
+    # quase pretas espalhadas pela cena assim que a camera aproxima o bastante
+    # para cortar as esferas da frente. Numa bicamada densa isso le como
+    # sujeira ou como buraco na geometria, e nao como um corte.
+    #
+    # Nao e oclusao ambiente nem sombra, e vale registrar porque as duas sao o
+    # palpite obvio: subir 'ambient' para 0.60 e desligar 'ray_shadow' nao
+    # mudam nada, e nenhum atomo da cena tem cor escura. O teste que decide e
+    # pintar este ajuste de amarelo: as manchas ficam amarelas.
+    #
+    # 'default' faz o corte herdar a cor do proprio atomo.
+    cmd.set("ray_interior_color", "default")
 
     cmd.set("orthoscopic", 0)
     cmd.set("field_of_view", 20)

@@ -109,6 +109,20 @@ tem 241 átomos por resíduo. O `split` mede isso antes de classificar e avisa n
 log quando descarta um homônimo. A mesma armadilha vale para `CA`, `MG` e `ZN`
 como nome de resíduo.
 
+**Manchas quase pretas espalhadas pela cena**
+É o interior das esferas cortadas pelo plano de recorte da câmera. Assim que a
+câmera aproxima o bastante para cortar as esferas da frente, o PyMOL pinta a
+superfície de corte com `ray_interior_color`, cujo padrão é `grey20`. Numa
+bicamada densa isso lê como sujeira, ou como buraco na geometria.
+
+As duas suspeitas óbvias estão erradas, e vale saber para não perder tempo:
+subir `ambient` para 0.60 não muda nada, desligar `ray_shadow` não muda nada, e
+nenhum átomo da cena tem cor escura. O teste que decide é pintar o próprio
+ajuste de amarelo: se as manchas ficam amarelas, é ele.
+
+O pacote usa `ray_interior_color, default` desde a versão 1.3.1, que faz o
+corte herdar a cor do próprio átomo.
+
 **Manchas pretas na superfície da proteína**
 Oclusão ambiente saturada. `ambient_occlusion_scale` é a distância de
 amostragem em angstrom, e o padrão 25 do PyMOL vale para esfera: as cavidades
