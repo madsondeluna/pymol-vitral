@@ -71,7 +71,7 @@ preset_prot5
 
 | side | top | corner |
 |---|---|---|
-| ![preset_prot5 lado](img/prot5_lado.png) | ![preset_prot5 cima](img/prot5_cima.png) | _(pending)_ |
+| ![preset_prot5 lado](img/prot5_lado.png) | ![preset_prot5 cima](img/prot5_cima.png) | ![preset_prot5 quina](img/prot5_quina.png) |
 
 ### `preset_prot6`
 
@@ -83,7 +83,7 @@ preset_prot6
 
 | side | top | corner |
 |---|---|---|
-| _(pending)_ | _(pending)_ | _(pending)_ |
+| ![preset_prot6 lado](img/prot6_lado.png) | ![preset_prot6 cima](img/prot6_cima.png) | ![preset_prot6 quina](img/prot6_quina.png) |
 
 ### `preset_prot7`
 
@@ -95,7 +95,7 @@ preset_prot7
 
 | side | top | corner |
 |---|---|---|
-| _(pending)_ | _(pending)_ | _(pending)_ |
+| ![preset_prot7 lado](img/prot7_lado.png) | ![preset_prot7 cima](img/prot7_cima.png) | ![preset_prot7 quina](img/prot7_quina.png) |
 
 ### `preset_prot8`
 
@@ -107,7 +107,7 @@ preset_prot8
 
 | side | top | corner |
 |---|---|---|
-| _(pending)_ | _(pending)_ | _(pending)_ |
+| ![preset_prot8 lado](img/prot8_lado.png) | ![preset_prot8 cima](img/prot8_cima.png) | ![preset_prot8 quina](img/prot8_quina.png) |
 
 ### `preset_prot9`
 
@@ -119,7 +119,7 @@ preset_prot9
 
 | side | top | corner |
 |---|---|---|
-| _(pending)_ | _(pending)_ | _(pending)_ |
+| ![preset_prot9 lado](img/prot9_lado.png) | ![preset_prot9 cima](img/prot9_cima.png) | ![preset_prot9 quina](img/prot9_quina.png) |
 
 ### `preset_prot10`
 
@@ -131,7 +131,7 @@ preset_prot10
 
 | side | top | corner |
 |---|---|---|
-| _(pending)_ | _(pending)_ | _(pending)_ |
+| ![preset_prot10 lado](img/prot10_lado.png) | ![preset_prot10 cima](img/prot10_cima.png) | ![preset_prot10 quina](img/prot10_quina.png) |
 
 ## Membrane presets
 
@@ -152,7 +152,7 @@ preset_memb1
 
 | side | top | corner |
 |---|---|---|
-| _(pending)_ | _(pending)_ | _(pending)_ |
+| ![preset_memb1 lado](img/memb1_lado.png) | ![preset_memb1 cima](img/memb1_cima.png) | ![preset_memb1 quina](img/memb1_quina.png) |
 
 ### `preset_memb2`
 
@@ -164,7 +164,7 @@ preset_memb2
 
 | side | top | corner |
 |---|---|---|
-| _(pending)_ | _(pending)_ | _(pending)_ |
+| ![preset_memb2 lado](img/memb2_lado.png) | ![preset_memb2 cima](img/memb2_cima.png) | ![preset_memb2 quina](img/memb2_quina.png) |
 
 ### `preset_memb3`
 
@@ -176,7 +176,7 @@ preset_memb3
 
 | side | top | corner |
 |---|---|---|
-| _(pending)_ | _(pending)_ | _(pending)_ |
+| ![preset_memb3 lado](img/memb3_lado.png) | ![preset_memb3 cima](img/memb3_cima.png) | ![preset_memb3 quina](img/memb3_quina.png) |
 
 ### `preset_memb4`
 
@@ -188,7 +188,7 @@ preset_memb4
 
 | side | top | corner |
 |---|---|---|
-| _(pending)_ | _(pending)_ | _(pending)_ |
+| ![preset_memb4 lado](img/memb4_lado.png) | ![preset_memb4 cima](img/memb4_cima.png) | ![preset_memb4 quina](img/memb4_quina.png) |
 
 ### `preset_memb5`
 
@@ -200,7 +200,7 @@ preset_memb5
 
 | side | top | corner |
 |---|---|---|
-| _(pending)_ | _(pending)_ | _(pending)_ |
+| ![preset_memb5 lado](img/memb5_lado.png) | ![preset_memb5 cima](img/memb5_cima.png) | ![preset_memb5 quina](img/memb5_quina.png) |
 
 ### `preset_memb6`
 
@@ -212,7 +212,7 @@ preset_memb6
 
 | side | top | corner |
 |---|---|---|
-| _(pending)_ | _(pending)_ | _(pending)_ |
+| ![preset_memb6 lado](img/memb6_lado.png) | ![preset_memb6 cima](img/memb6_cima.png) | ![preset_memb6 quina](img/memb6_quina.png) |
 
 ### `preset_memb7`
 
@@ -224,7 +224,7 @@ preset_memb7
 
 | side | top | corner |
 |---|---|---|
-| _(pending)_ | _(pending)_ | _(pending)_ |
+| ![preset_memb7 lado](img/memb7_lado.png) | ![preset_memb7 cima](img/memb7_cima.png) | ![preset_memb7 quina](img/memb7_quina.png) |
 
 ### `preset_memb8`
 
@@ -236,7 +236,7 @@ preset_memb8
 
 | side | top | corner |
 |---|---|---|
-| _(pending)_ | _(pending)_ | _(pending)_ |
+| ![preset_memb8 lado](img/memb8_lado.png) | ![preset_memb8 cima](img/memb8_cima.png) | ![preset_memb8 quina](img/memb8_quina.png) |
 
 ### `preset_memb9`
 
@@ -248,7 +248,7 @@ preset_memb9
 
 | side | top | corner |
 |---|---|---|
-| _(pending)_ | _(pending)_ | _(pending)_ |
+| ![preset_memb9 lado](img/memb9_lado.png) | ![preset_memb9 cima](img/memb9_cima.png) | ![preset_memb9 quina](img/memb9_quina.png) |
 
 ### `preset_memb10`
 
@@ -260,5 +260,5 @@ preset_memb10
 
 | side | top | corner |
 |---|---|---|
-| _(pending)_ | _(pending)_ | _(pending)_ |
+| ![preset_memb10 lado](img/memb10_lado.png) | ![preset_memb10 cima](img/memb10_cima.png) | ![preset_memb10 quina](img/memb10_quina.png) |
 
