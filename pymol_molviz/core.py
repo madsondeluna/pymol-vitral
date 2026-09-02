@@ -235,7 +235,7 @@ def material(shadows=1, ao=1, hq=1):
     cmd.set("light3", [-0.20, 0.50, -0.60])
 
     cmd.set("ambient_occlusion_mode", 1 if truthy(ao) else 0)
-    cmd.set("ambient_occlusion_scale", 25)
+    cmd.set("ambient_occlusion_scale", 12)
     cmd.set("ambient_occlusion_smooth", 15)
 
     cmd.set("ray_shadow", 1 if truthy(shadows) else 0)
@@ -284,13 +284,19 @@ def cartoon_style():
     cmd.set("cartoon_side_chain_helper", 1)
 
 
+# ambient_occlusion_scale e a distancia de amostragem em angstrom, e o padrao
+# 25 do PyMOL e calibrado para esfera. Numa superficie molecular de proteina as
+# cavidades sao mais largas que isso, ficam totalmente ocluidas e saem PRETAS,
+# em manchas que leem como defeito de geometria. Medido nos dois regimes: em
+# esferas de membrana 12 e 25 rendem imagem indistinguivel, e em superficie so
+# o valor baixo e utilizavel. Dai a escala menor em todos os niveis.
 AO_LEVELS = {
     # (modo, ambient, direct, reflect, escala)
     "off":     (0, 0.14, 0.38, 0.42, 0),
-    "soft":    (1, 0.32, 0.26, 0.36, 18),
-    "medium":  (1, 0.45, 0.20, 0.32, 25),
-    "strong":  (1, 0.62, 0.12, 0.22, 35),
-    "extreme": (1, 0.80, 0.05, 0.12, 45),
+    "soft":    (1, 0.32, 0.26, 0.36, 8),
+    "medium":  (1, 0.45, 0.20, 0.32, 12),
+    "strong":  (1, 0.62, 0.12, 0.22, 17),
+    "extreme": (1, 0.80, 0.05, 0.12, 22),
 }
 
 
@@ -451,7 +457,7 @@ def paper(width_mm=85, dpi=300):
     cmd.set("light_count", 2)
     cmd.set("ray_shadow", 0)
     cmd.set("ambient_occlusion_mode", 1)
-    cmd.set("ambient_occlusion_scale", 25)
+    cmd.set("ambient_occlusion_scale", 12)
     cmd.set("ambient_occlusion_smooth", 15)
     cmd.set("specular", 0.18)
     cmd.set("shininess", 30)

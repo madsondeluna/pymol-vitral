@@ -84,13 +84,19 @@ previsível que `field`, que usa mapa gaussiano e exige calibrar o nível.
 | `preset_prot7` | cartoon com camada de solvatação e íons próximos | caixa de MD |
 | `preset_prot8` | superfície por carga dentro do volume de solvente | ilustrar o sistema simulado |
 | `preset_prot9` | superfície, campo de solvente e as doze arestas da caixa | dimensões da caixa, proporção soluto/solvente |
-| `preset_prot10` | superfície translúcida, resíduos de contato opacos e em sticks | onde duas cadeias, ou proteína e ligante, se tocam |
+| `preset_prot10` | uma superfície translúcida, contatos opacos, transparência em rampa entre os dois | onde duas cadeias, ou proteína e ligante, se tocam |
 
 `prot_auto` escolhe entre `preset_prot1` e `preset_prot6` pelo número de
 resíduos, com corte em 60.
 
-`preset_prot7` aceita o raio da camada, padrão 4.0. `preset_prot10` aceita o
-raio de contato, padrão 4.5, e precisa de duas cadeias ou de um ligante.
+`preset_prot7` aceita o raio da camada, padrão 4.0.
+
+`preset_prot10` aceita o raio de contato (padrão 4.5), a largura da rampa em
+angstrom (`fade`, padrão 10.0) e o número de faixas (`passos`, padrão 8). A
+rampa existe porque o degrau é o defeito: passar de 0.78 para 0.0 na borda de
+um resíduo desenha um recorte duro, que lê como artefato de seleção e não como
+uma região. `transparency` é por átomo na superfície, e não por objeto, que é o
+que torna a rampa possível.
 
 `preset_prot9` desenha a caixa a partir do extent do que está carregado, e não
 de um registro CRYST1, que frame de dinâmica molecular costuma não ter. As
@@ -146,7 +152,11 @@ mv_render    figura.png, 2000, 1500, 300
 ```
 
 A oclusão ambiente fica ligada em todos os presets, menos no `preset_memb6`,
-que a desliga para a navegação continuar fluida. Ela não alcança cartoon: o
+que a desliga para a navegação continuar fluida. `ambient_occlusion_scale` é a
+distância de amostragem em angstrom, e o padrão 25 do PyMOL é calibrado para
+esfera: numa superfície molecular de proteína as cavidades são mais largas que
+isso, ficam totalmente ocluídas e saem pretas. Os níveis aqui amostram entre 8
+e 22. Ela não alcança cartoon: o
 PyMOL a assa na geometria de esfera e de superfície, então um preset baseado em
 cartoon não carrega relevo de contato nenhum. Para figura com relevo, os
 caminhos são superfície (`preset_prot3`, `preset_prot9`) ou esferas

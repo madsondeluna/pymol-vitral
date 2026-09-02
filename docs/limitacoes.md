@@ -85,6 +85,14 @@ O mais provável não é ausência de água, mas imagem periódica: a proteína 
 numa borda da caixa e as águas vizinhas estão do outro lado. Corrija fora do
 PyMOL, com `gmx trjconv -pbc mol -center`, antes de carregar.
 
+**Manchas pretas na superfície da proteína**
+Oclusão ambiente saturada. `ambient_occlusion_scale` é a distância de
+amostragem em angstrom, e o padrão 25 do PyMOL vale para esfera: as cavidades
+de uma superfície molecular são mais largas que isso, ficam totalmente ocluídas
+e saem pretas, em manchas que parecem defeito de geometria. Os níveis do pacote
+amostram entre 8 e 22 desde a versão 1.1.0. Num uso manual, baixe a escala
+antes de suspeitar da malha.
+
 **A tela fica coberta de pontos rosa**
 São indicadores de seleção. O pacote desliga com
 `set auto_show_selections, off`; num uso manual, rode o comando ou `deselect`.

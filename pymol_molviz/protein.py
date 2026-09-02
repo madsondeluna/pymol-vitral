@@ -18,6 +18,9 @@ from pymol_molviz.core import has, truthy, n_residues
 BASIC = "ARG+LYS+HIS"
 ACIDIC = "ASP+GLU"
 POLAR = "SER+THR+ASN+GLN+TYR+CYS+TRP+HIS"
+
+# Transparencia do que nao e interface, e topo da rampa do preset_prot10.
+BASE_TRANSP = 0.78
 APOLAR = "ALA+VAL+LEU+ILE+MET+PHE+PRO+GLY"
 
 # Escala Kyte-Doolittle: a mais citada e a que melhor separa nucleo de
@@ -128,8 +131,11 @@ def prepare():
 
 
 def _reset():
+    # obj_box e um CGO e prot_iface e uma selecao: clear_reps nao alcanca
+    # nenhum dos dois, entao sem apagar aqui a caixa do preset_prot9 fica na
+    # cena por cima do preset seguinte.
     for obj in ("surf_wat", "map_wat", "obj_ions_halo", "wat_shell",
-                "ions_shell"):
+                "ions_shell", "obj_box", "prot_iface", "iface_partner"):
         cmd.delete(obj)
     core.clear_reps(OBJECTS)
 
@@ -617,60 +623,80 @@ def preset9(paper=0):
     _finish("preset_prot9: caixa de %.1f x %.1f x %.1f A" % tuple(dims), paper)
 
 
-def preset10(raio=4.5, paper=0):
-    """Interface de contato.
+def preset10(raio=4.5, fade=10.0, passos=8, paper=0):
+    """Interface de contato, com transicao continua.
 
-    Proteina:  superficie translucida
-    Interface: residuos de contato em superficie opaca e sticks
-    Agua:      desligada
+    Proteina: superficie inteira translucida
+    Interface: opaca e colorida por carga, com o translucido subindo em rampa
+    Agua:     desligada
 
-    Os residuos de contato sao os que ficam a 'raio' de outra cadeia, ou do
-    ligante quando ha uma cadeia so. Responde a onde as duas partes se tocam,
-    que uma superficie inteira translucida nao mostra: tudo fica igualmente
-    visivel e nada se destaca.
+    A pegada da interface, nos dois lados. A superficie e uma so e cobre tudo:
+    o que separa o contato do resto nao e a representacao, e a transparencia.
+
+    A rampa existe porque o degrau e o defeito. Passar de 0.72 para 0.0 numa
+    borda de residuo desenha um recorte duro, que le como artefato de selecao
+    e nao como uma regiao. Aqui a transparencia cai em 'passos' faixas ao
+    longo de 'fade' angstrom a partir do contato, entao a area de interesse
+    emerge do translucido em vez de ser colada por cima dele.
+
+    'transparency' e por atomo na superficie, e nao por objeto, que e o que
+    torna a rampa possivel: cada faixa e uma chamada, da mais distante para a
+    mais proxima, e a seguinte sobrescreve a anterior no que ja passou.
     """
     if not prepare():
         return
     _reset()
 
-    chains = [c for c in cmd.get_chains("obj_prot")]
-    parceiro = None
+    chains = cmd.get_chains("obj_prot")
     if len(chains) > 1:
-        parceiro = "obj_prot and not chain '%s'" % chains[0]
-        alvo = "obj_prot and chain '%s'" % chains[0]
+        lado_a = "obj_prot and chain '%s'" % chains[0]
+        lado_b = "obj_prot and not chain '%s'" % chains[0]
         origem = "cadeia %s contra as demais" % (chains[0] or "sem nome")
     elif has("obj_lig"):
-        parceiro, alvo = "obj_lig", "obj_prot"
+        lado_a, lado_b = "obj_prot", "obj_lig"
         origem = "proteina contra ligante"
     else:
         print("[prot] preset_prot10 precisa de duas cadeias ou de um "
               "ligante. Use preset_prot3 para a superficie inteira.")
         return
 
-    cmd.delete("prot_iface")
+    # Os dois lados do contato, para a pegada aparecer nas duas faces.
     cmd.select("prot_iface",
-               "byres (%s within %.1f of (%s))" % (alvo, float(raio), parceiro))
+               "byres ((%s) within %.1f of (%s)) or "
+               "byres ((%s) within %.1f of (%s))"
+               % (lado_a, float(raio), lado_b,
+                  lado_b, float(raio), lado_a))
     n = n_residues("prot_iface")
 
     cmd.show("surface", "obj_prot")
-    cmd.set("transparency", 0.62, "obj_prot")
-    color("chain")
+    cmd.color("mv_glyc", "obj_prot")
+    cmd.set("transparency", BASE_TRANSP, "obj_prot")
+
+    # A rampa: da faixa mais distante para a mais proxima, cada uma
+    # sobrescrevendo a anterior no que ja esta dentro dela.
+    passos = max(1, int(passos))
+    for k in range(passos, 0, -1):
+        r = float(raio) + float(fade) * k / passos
+        cmd.set("transparency", BASE_TRANSP * k / float(passos),
+                "byres (obj_prot within %.2f of prot_iface)" % r)
+
     if n:
         cmd.set("transparency", 0.0, "prot_iface")
-        cmd.show("sticks", "prot_iface and not (name C+N+O)")
-        cmd.set("stick_radius", 0.18, "obj_prot")
         cmd.color("mv_apolar", "prot_iface")
         cmd.color("mv_pos", "prot_iface and resn %s" % BASIC)
         cmd.color("mv_neg", "prot_iface and resn %s" % ACIDIC)
+        cmd.color("mv_polar", "prot_iface and resn %s" % POLAR)
     else:
         print("[prot] nenhum residuo a %.1f A do parceiro." % float(raio))
 
     if has("obj_lig"):
         cmd.show("sticks", "obj_lig")
-        cmd.set("stick_radius", 0.22, "obj_lig")
+        cmd.set("stick_radius", 0.20, "obj_lig")
         cmd.color("mv_lig", "obj_lig")
+
     cmd.deselect()
-    _finish("preset_prot10: interface, %s (%d residuos)" % (origem, n), paper)
+    _finish("preset_prot10: pegada da interface, %s (%d residuos, rampa de "
+            "%.1f A em %d passos)" % (origem, n, float(fade), passos), paper)
 
 
 def auto():

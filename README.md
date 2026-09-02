@@ -90,15 +90,21 @@ the session. `preset_memb9` needs phosphates to find the midplane.
 | `preset_prot7` | cartoon plus water and ions within 4.0 A | secondary structure | MD box, solvation shell |
 | `preset_prot8` | surface inside the solvent volume | formal charge | the simulated system as a whole |
 | `preset_prot9` | surface, solvent field, twelve box edges | formal charge | box dimensions, solute to solvent ratio |
-| `preset_prot10` | translucent surface, contact residues opaque and in sticks | chain, contacts by charge | where two chains or protein and ligand touch |
+| `preset_prot10` | one translucent surface, contacts opaque, transparency ramped between them | light grey base, contacts by charge | where two chains or protein and ligand touch |
 
 `prot_auto` picks between `preset_prot1` and `preset_prot6` by residue count,
 with the cutoff at 60. `preset_prot3` writes to the B-factor column;
 `prot_restore_b` puts the original values back. `preset_prot5` reads the
 B-factor column as deposited, which inverts on predicted models carrying pLDDT.
 
-`preset_prot7` takes the shell radius, default 4.0. `preset_prot10` takes the
-contact radius, default 4.5, and needs either two chains or a ligand.
+`preset_prot7` takes the shell radius, default 4.0.
+
+`preset_prot10` takes the contact radius (default 4.5), the ramp width in
+angstrom (`fade`, default 10.0) and the number of steps (`passos`, default 8).
+It needs either two chains or a ligand. Transparency is a per-atom property on
+a surface, which is what makes the ramp possible: the contact face is opaque
+and the rest climbs to 0.78 over `fade` angstrom, so the region emerges from
+the translucent body instead of being cut into it with a hard edge.
 
 `preset_prot9` draws the box from the extent of what is loaded, not from a
 CRYST1 record, which MD frames often lack. It prints the dimensions for the
@@ -137,7 +143,12 @@ mv_render      figure.png, 2000, 1500, 300
 ```
 
 Ambient occlusion is on in every preset except `preset_memb6`, which turns it
-off to keep navigation responsive. It does not reach cartoon: PyMOL bakes it
+off to keep navigation responsive. `ambient_occlusion_scale` is the sampling
+distance in angstrom; PyMOL defaults to 25, which is calibrated for spheres and
+saturates on a protein surface, where wide cavities come out as black patches.
+The levels here sample between 8 and 22. Measured in both regimes: on membrane
+spheres 12 and 25 render indistinguishably, and on a surface only the lower
+value is usable. It does not reach cartoon: PyMOL bakes it
 into sphere and surface geometry only, so a cartoon-based preset carries no
 contact relief.
 

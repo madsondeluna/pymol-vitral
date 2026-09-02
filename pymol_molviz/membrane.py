@@ -141,8 +141,10 @@ def prepare():
 
 
 def _reset():
+    # As selecoes dos presets 7 a 9 entram aqui: clear_reps so mexe em objeto,
+    # e uma selecao esquecida reaparece no painel lateral do preset seguinte.
     for obj in ("map_tail", "surf_tail", "map_wat", "surf_wat",
-                "obj_ions_halo"):
+                "obj_ions_halo", "lip_slab", "lip_ring", "lip_up", "lip_dn"):
         cmd.delete(obj)
     core.clear_reps(OBJECTS)
 
