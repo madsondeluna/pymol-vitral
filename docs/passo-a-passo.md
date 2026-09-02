@@ -203,17 +203,17 @@ preset_prot8
 # CRYST1, que frame de dinâmica molecular costuma não ter.
 preset_prot9
 
-# Interface de contato. Uma superfície só, translúcida, com os resíduos de
-# contato opacos e coloridos por carga. A transparência sobe em rampa entre os
-# dois, para a região emergir em vez de ser recortada. Precisa de duas cadeias
-# ou de um ligante.
+# Interface de contato. O corpo vira cartoon translúcido, como no preset_prot1,
+# e as cadeias laterais que tocam a outra parte vêm para a frente em licorice
+# opaco. Com mais de duas cadeias, mostra o par de maior contato e esconde o
+# resto. Serve tanto a proteína-proteína quanto a proteína-ligante.
 preset_prot10
 
-# Rampa mais larga e mais suave: 16 A em 12 faixas.
-preset_prot10 raio=4.5, fade=16.0, passos=12
+# Escolher outro par de cadeias.
+preset_prot10 cadeias=A C
 
-# Rampa curta, para a pegada ficar mais delimitada.
-preset_prot10 fade=4.0, passos=4
+# Raio de contato maior, para pegar a segunda camada.
+preset_prot10 raio=6.0
 ```
 
 Aqui também vale o `paper`: `preset_prot9 paper=170` sai direto no modo de

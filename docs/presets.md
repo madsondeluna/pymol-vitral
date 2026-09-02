@@ -84,19 +84,25 @@ previsível que `field`, que usa mapa gaussiano e exige calibrar o nível.
 | `preset_prot7` | cartoon com camada de solvatação e íons próximos | caixa de MD |
 | `preset_prot8` | superfície por carga dentro do volume de solvente | ilustrar o sistema simulado |
 | `preset_prot9` | superfície, campo de solvente e as doze arestas da caixa | dimensões da caixa, proporção soluto/solvente |
-| `preset_prot10` | uma superfície translúcida, contatos opacos, transparência em rampa entre os dois | onde duas cadeias, ou proteína e ligante, se tocam |
+| `preset_prot10` | cartoon translúcido, cadeias laterais de contato em licorice opaco | onde duas cadeias, ou proteína e ligante, se tocam |
 
 `prot_auto` escolhe entre `preset_prot1` e `preset_prot6` pelo número de
 resíduos, com corte em 60.
 
 `preset_prot7` aceita o raio da camada, padrão 4.0.
 
-`preset_prot10` aceita o raio de contato (padrão 4.5), a largura da rampa em
-angstrom (`fade`, padrão 10.0) e o número de faixas (`passos`, padrão 8). A
-rampa existe porque o degrau é o defeito: passar de 0.78 para 0.0 na borda de
-um resíduo desenha um recorte duro, que lê como artefato de seleção e não como
-uma região. `transparency` é por átomo na superfície, e não por objeto, que é o
-que torna a rampa possível.
+`preset_prot10` aceita o raio de contato (padrão 4.5) e, opcionalmente, o par
+de cadeias: `preset_prot10 cadeias=A C`. Com mais de duas cadeias ele mostra o
+par de maior contato e esconde o resto, porque um tetrâmero junta três
+interfaces diferentes numa figura só e nenhuma delas se lê.
+
+Superfície é a representação errada para esta pergunta. Uma superfície fechada
+esconde justamente a área de contato, que fica entre as duas partes, e
+translúcida ela vira uma massa onde nada se distingue. Cartoon deixa ver
+através, e licorice mostra a cadeia lateral, que é onde a interação acontece.
+O carbono dos contatos leva a cor da classe do resíduo e o resto vai por
+elemento, que é o que deixa ler doador e aceptor de ligação de hidrogênio na
+própria figura.
 
 `preset_prot9` desenha a caixa a partir do extent do que está carregado, e não
 de um registro CRYST1, que frame de dinâmica molecular costuma não ter. As

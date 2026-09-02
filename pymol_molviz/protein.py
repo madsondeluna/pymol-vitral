@@ -8,6 +8,7 @@ obj_ions, obj_wat) e aplica combinacoes de representacao, cor e solvente.
 """
 
 from pymol import cmd
+from pymol import util
 from pymol_molviz import core
 from pymol_molviz.core import has, truthy, n_residues
 
@@ -19,8 +20,8 @@ BASIC = "ARG+LYS+HIS"
 ACIDIC = "ASP+GLU"
 POLAR = "SER+THR+ASN+GLN+TYR+CYS+TRP+HIS"
 
-# Transparencia do que nao e interface, e topo da rampa do preset_prot10.
-BASE_TRANSP = 0.78
+# Cartoon recuado para o fundo, no preset que traz o sitio para a frente.
+CARTOON_GHOST = 0.72
 APOLAR = "ALA+VAL+LEU+ILE+MET+PHE+PRO+GLY"
 
 # Escala Kyte-Doolittle: a mais citada e a que melhor separa nucleo de
@@ -386,7 +387,7 @@ def _context(waters=0, show_ions=1, ligands=1, nucleic=1):
         cmd.set("sphere_transparency", 0.5, "obj_wat")
 
 
-def _finish(msg, paper=0):
+def _finish(msg, paper=0, ref=None):
     """Fecha o preset. 'paper' liga o modo de periodico na mesma linha.
 
     Sem 'paper' o preset so define representacao e cor, e a iluminacao fica
@@ -395,7 +396,11 @@ def _finish(msg, paper=0):
     figura. Os dois caminhos existem porque a mesma cena serve as duas coisas.
     """
     cmd.rebuild()          # assa a oclusao ambiente na geometria nova
-    ref = "obj_prot" if has("obj_prot") else "obj_nucl"
+    # 'ref' permite ao preset enquadrar so o que ele mostra: o preset_prot10
+    # esconde as cadeias fora do par, e enquadrar obj_prot inteiro deixaria a
+    # cena descentralizada em torno do que nao esta na figura.
+    if ref is None:
+        ref = "obj_prot" if has("obj_prot") else "obj_nucl"
     if has(ref):
         cmd.orient(ref)
         cmd.zoom(ref, 4)
@@ -623,80 +628,121 @@ def preset9(paper=0):
     _finish("preset_prot9: caixa de %.1f x %.1f x %.1f A" % tuple(dims), paper)
 
 
-def preset10(raio=4.5, fade=10.0, passos=8, paper=0):
-    """Interface de contato, com transicao continua.
+def _par_mais_extenso(chains, raio):
+    """O par de cadeias com mais atomos em contato.
 
-    Proteina: superficie inteira translucida
-    Interface: opaca e colorida por carga, com o translucido subindo em rampa
-    Agua:     desligada
+    Num tetramero, 'a cadeia A contra as demais' junta tres interfaces
+    diferentes numa figura so e o resultado nao se le. Uma figura de interface
+    mostra UMA interface, e a mais extensa e o padrao util.
+    """
+    melhor, maior = None, 0
+    for i, a in enumerate(chains):
+        for b in chains[i + 1:]:
+            sa = "obj_prot and chain '%s'" % a
+            sb = "obj_prot and chain '%s'" % b
+            n = cmd.count_atoms("(%s) within %.1f of (%s)" % (sa, float(raio), sb))
+            if n > maior:
+                melhor, maior = (a, b), n
+    return melhor
 
-    A pegada da interface, nos dois lados. A superficie e uma so e cobre tudo:
-    o que separa o contato do resto nao e a representacao, e a transparencia.
 
-    A rampa existe porque o degrau e o defeito. Passar de 0.72 para 0.0 numa
-    borda de residuo desenha um recorte duro, que le como artefato de selecao
-    e nao como uma regiao. Aqui a transparencia cai em 'passos' faixas ao
-    longo de 'fade' angstrom a partir do contato, entao a area de interesse
-    emerge do translucido em vez de ser colada por cima dele.
+def preset10(raio=4.5, cadeias="", paper=0):
+    """Interface de contato em licorice.
 
-    'transparency' e por atomo na superficie, e nao por objeto, que e o que
-    torna a rampa possivel: cada faixa e uma chamada, da mais distante para a
-    mais proxima, e a seguinte sobrescreve a anterior no que ja passou.
+    Proteina:  cartoon por estrutura secundaria, translucido
+    Contatos:  cadeias laterais em licorice opaco, carbono por residuo e o
+               resto por elemento
+    Ligante:   licorice, carbono em cor propria
+    Agua:      desligada
+
+    A mesma leitura do preset_prot1, com o corpo recuando para o fundo e o
+    sitio vindo para a frente. Serve a proteina-proteina e a proteina-ligante
+    pelo mesmo caminho: o que muda e quem e o parceiro.
+
+    Com mais de duas cadeias, mostra o par de maior contato e esconde o resto.
+    Passe 'cadeias' para escolher outro par: preset_prot10 cadeias=A C.
+
+    Superficie foi o caminho errado aqui. Uma superficie fechada esconde
+    justamente a area de contato, que fica ENTRE as duas partes, e translucida
+    ela vira uma massa onde nada se le. Cartoon deixa ver atraves, e licorice
+    mostra a cadeia lateral, que e onde a interacao acontece.
+
+    'cartoon_side_chain_helper' apaga o pedaco de backbone que o licorice ja
+    desenha: sem ele os dois se sobrepoem e o residuo sai com uma haste dupla.
     """
     if not prepare():
         return
     _reset()
 
     chains = cmd.get_chains("obj_prot")
-    if len(chains) > 1:
-        lado_a = "obj_prot and chain '%s'" % chains[0]
-        lado_b = "obj_prot and not chain '%s'" % chains[0]
-        origem = "cadeia %s contra as demais" % (chains[0] or "sem nome")
+    visivel = None
+
+    escolhidas = [c for c in str(cadeias).replace(",", " ").split() if c]
+    if len(escolhidas) == 2:
+        par = tuple(escolhidas)
+    elif len(chains) > 2:
+        par = _par_mais_extenso(chains, raio)
+    elif len(chains) == 2:
+        par = (chains[0], chains[1])
+    else:
+        par = None
+
+    if par:
+        lado_a = "obj_prot and chain '%s'" % par[0]
+        lado_b = "obj_prot and chain '%s'" % par[1]
+        visivel = "obj_prot and chain '%s'+'%s'" % par
+        origem = "cadeias %s e %s" % (par[0] or "sem nome", par[1] or "sem nome")
     elif has("obj_lig"):
         lado_a, lado_b = "obj_prot", "obj_lig"
         origem = "proteina contra ligante"
     else:
         print("[prot] preset_prot10 precisa de duas cadeias ou de um "
-              "ligante. Use preset_prot3 para a superficie inteira.")
+              "ligante. Use preset_prot2 para o sitio sem parceiro definido.")
         return
 
-    # Os dois lados do contato, para a pegada aparecer nas duas faces.
     cmd.select("prot_iface",
                "byres ((%s) within %.1f of (%s)) or "
                "byres ((%s) within %.1f of (%s))"
-               % (lado_a, float(raio), lado_b,
-                  lado_b, float(raio), lado_a))
+               % (lado_a, float(raio), lado_b, lado_b, float(raio), lado_a))
     n = n_residues("prot_iface")
 
-    cmd.show("surface", "obj_prot")
-    cmd.color("mv_glyc", "obj_prot")
-    cmd.set("transparency", BASE_TRANSP, "obj_prot")
-
-    # A rampa: da faixa mais distante para a mais proxima, cada uma
-    # sobrescrevendo a anterior no que ja esta dentro dela.
-    passos = max(1, int(passos))
-    for k in range(passos, 0, -1):
-        r = float(raio) + float(fade) * k / passos
-        cmd.set("transparency", BASE_TRANSP * k / float(passos),
-                "byres (obj_prot within %.2f of prot_iface)" % r)
+    # O corpo, igual ao preset_prot1, recuado para o fundo. Fora do par a
+    # cadeia sai da cena: ela nao participa da interface e so ocupa espaco.
+    alvo_cartoon = visivel or "obj_prot"
+    cmd.show("cartoon", alvo_cartoon)
+    cmd.cartoon("oval", "%s and ss S" % alvo_cartoon)
+    cmd.cartoon("automatic", "%s and ss H" % alvo_cartoon)
+    cmd.cartoon("loop", "%s and not (ss S or ss H)" % alvo_cartoon)
+    color("ss")
+    cmd.set("cartoon_transparency", CARTOON_GHOST, "obj_prot")
+    cmd.set("cartoon_side_chain_helper", 1, "obj_prot")
 
     if n:
-        cmd.set("transparency", 0.0, "prot_iface")
-        cmd.color("mv_apolar", "prot_iface")
-        cmd.color("mv_pos", "prot_iface and resn %s" % BASIC)
-        cmd.color("mv_neg", "prot_iface and resn %s" % ACIDIC)
-        cmd.color("mv_polar", "prot_iface and resn %s" % POLAR)
+        # Licorice so na cadeia lateral: o backbone ja e o cartoon.
+        cmd.show("sticks", "prot_iface and sidechain")
+        cmd.show("sticks", "prot_iface and name CA")
+        cmd.set("stick_radius", 0.20, "obj_prot")
+        # Carbono na cor do residuo, o resto por elemento: e o que deixa ler
+        # doador e aceptor de ligacao de hidrogenio na propria figura.
+        cmd.color("mv_apolar", "prot_iface and elem C")
+        cmd.color("mv_pos", "prot_iface and elem C and resn %s" % BASIC)
+        cmd.color("mv_neg", "prot_iface and elem C and resn %s" % ACIDIC)
+        cmd.color("mv_polar", "prot_iface and elem C and resn %s" % POLAR)
+        util.cnc("prot_iface")
     else:
         print("[prot] nenhum residuo a %.1f A do parceiro." % float(raio))
 
     if has("obj_lig"):
-        cmd.show("sticks", "obj_lig")
-        cmd.set("stick_radius", 0.20, "obj_lig")
-        cmd.color("mv_lig", "obj_lig")
+        alvo_lig = "obj_lig within 6 of (%s)" % alvo_cartoon
+        if cmd.count_atoms(alvo_lig):
+            cmd.show("sticks", alvo_lig)
+            cmd.set("stick_radius", 0.24, "obj_lig")
+            cmd.color("mv_lig", "obj_lig and elem C")
+            util.cnc("obj_lig")
 
     cmd.deselect()
-    _finish("preset_prot10: pegada da interface, %s (%d residuos, rampa de "
-            "%.1f A em %d passos)" % (origem, n, float(fade), passos), paper)
+    _finish("preset_prot10: interface em licorice, %s (%d residuos)"
+            % (origem, n), paper, ref=visivel)
 
 
 def auto():

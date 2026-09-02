@@ -90,7 +90,7 @@ the session. `preset_memb9` needs phosphates to find the midplane.
 | `preset_prot7` | cartoon plus water and ions within 4.0 A | secondary structure | MD box, solvation shell |
 | `preset_prot8` | surface inside the solvent volume | formal charge | the simulated system as a whole |
 | `preset_prot9` | surface, solvent field, twelve box edges | formal charge | box dimensions, solute to solvent ratio |
-| `preset_prot10` | one translucent surface, contacts opaque, transparency ramped between them | light grey base, contacts by charge | where two chains or protein and ligand touch |
+| `preset_prot10` | translucent cartoon, contact side chains in opaque licorice | secondary structure; contact carbons by residue class, rest by element | where two chains, or protein and ligand, touch |
 
 `prot_auto` picks between `preset_prot1` and `preset_prot6` by residue count,
 with the cutoff at 60. `preset_prot3` writes to the B-factor column;
@@ -99,12 +99,14 @@ B-factor column as deposited, which inverts on predicted models carrying pLDDT.
 
 `preset_prot7` takes the shell radius, default 4.0.
 
-`preset_prot10` takes the contact radius (default 4.5), the ramp width in
-angstrom (`fade`, default 10.0) and the number of steps (`passos`, default 8).
-It needs either two chains or a ligand. Transparency is a per-atom property on
-a surface, which is what makes the ramp possible: the contact face is opaque
-and the rest climbs to 0.78 over `fade` angstrom, so the region emerges from
-the translucent body instead of being cut into it with a hard edge.
+`preset_prot10` takes the contact radius (default 4.5) and an optional chain
+pair: `preset_prot10 cadeias=A C`. With more than two chains it shows the pair
+with the largest contact and hides the rest, because a tetramer puts three
+different interfaces in one frame and none of them reads. Surface is the wrong
+representation for this question: a closed surface hides the contact area,
+which sits between the two parts, and translucent it becomes a mass where
+nothing is legible. Cartoon lets you see through, and licorice shows the side
+chain, which is where the interaction happens.
 
 `preset_prot9` draws the box from the extent of what is loaded, not from a
 CRYST1 record, which MD frames often lack. It prints the dimensions for the
