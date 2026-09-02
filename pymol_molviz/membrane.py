@@ -157,6 +157,19 @@ def _col_moiety():
     cmd.color("mv_head", "lip_head")
 
 
+def _phosphate_midplane():
+    """z medio dos fosfatos, que e o plano que separa os folhetos.
+
+    Devolve None quando nao ha fosfato: em Martini sem particula PO4 mapeada,
+    ou num sistema que nao e bicamada.
+    """
+    if not has("lip_phos"):
+        return None
+    zs = []
+    cmd.iterate_state(1, "lip_phos", "zs.append(z)", space={"zs": zs})
+    return sum(zs) / float(len(zs)) if zs else None
+
+
 def _col_leaflet():
     """Folheto superior e inferior.
 
@@ -332,18 +345,27 @@ def protein():
               "all-atom rode 'dss'; o PyMOL nao a infere de particulas CG.")
 
 
-def _finish(msg):
+def _finish(msg, paper=0):
+    """Fecha o preset. 'paper' liga o modo de periodico na mesma linha.
+
+    Sem 'paper' o preset so define representacao e cor, e a iluminacao fica
+    como estava: e o modo de explorar na tela, e mv_paper pode vir depois. Com
+    'paper', a largura de coluna em milimetros, a cena ja sai pronta para
+    figura. Os dois caminhos existem porque a mesma cena serve as duas coisas.
+    """
     protein()
     cmd.rebuild()          # assa a oclusao ambiente na geometria nova
     cmd.orient("obj_lipid")
     cmd.zoom("obj_lipid", 3)
     print("[membrane] %s" % msg)
+    if core.truthy_width(paper):
+        core.paper(float(paper))
 
 
 # =============================================================================
 # PRESETS
 # =============================================================================
-def preset1():
+def preset1(paper=0):
     """Esferas estratificadas.
 
     Lipideo: esferas com folga (0.55), cor por camada quimica
@@ -362,10 +384,10 @@ def preset1():
     color("moiety")
     _ions_spheres(0.5)
     water("surface", 0.62)
-    _finish("preset_memb1: esferas estratificadas")
+    _finish("preset_memb1: esferas estratificadas", paper)
 
 
-def preset2():
+def preset2(paper=0):
     """Spacefill solido.
 
     Lipideo: raio de van der Waals real, cor por folheto
@@ -383,10 +405,10 @@ def preset2():
     color("leaflet")
     _ions_vdw()
     water("surface", 0.78)
-    _finish("preset_memb2: spacefill solido")
+    _finish("preset_memb2: spacefill solido", paper)
 
 
-def preset3():
+def preset3(paper=0):
     """Licorice com ions destacados.
 
     Lipideo: sticks de raio alto, cabecas em esfera
@@ -406,10 +428,10 @@ def preset3():
     color("moiety")
     _ions_halo()
     water("spheres")
-    _finish("preset_memb3: licorice com ions destacados")
+    _finish("preset_memb3: licorice com ions destacados", paper)
 
 
-def preset4():
+def preset4(paper=0):
     """Bicamada fantasma.
 
     Lipideo: superficie translucida com licorice fino por dentro
@@ -429,10 +451,10 @@ def preset4():
     cmd.set("transparency", 0.58, "obj_lipid")
     color("moiety")
     _ions_mesh()
-    _finish("preset_memb4: bicamada fantasma")
+    _finish("preset_memb4: bicamada fantasma", paper)
 
 
-def preset5():
+def preset5(paper=0):
     """Ilustracao: nucleo hidrofobico continuo.
 
     Lipideo: caudas como isosuperficie gaussiana, cabecas em esfera
@@ -465,10 +487,10 @@ def preset5():
 
     _ions_spheres(0.85)
     water("field", 0.62)
-    _finish("preset_memb5: nucleo continuo")
+    _finish("preset_memb5: nucleo continuo", paper)
 
 
-def preset6():
+def preset6(paper=0):
     """Navegacao rapida.
 
     Lipideo: linhas, cor por especie
@@ -489,13 +511,182 @@ def preset6():
     cmd.set("line_width", 1.2, "obj_lipid")
     color("type")
     _ions_dots()
-    _finish("preset_memb6: navegacao rapida")
+    _finish("preset_memb6: navegacao rapida", paper)
+
+
+def _slab_selection(name, eixo=1, fracao=0.34):
+    """Fatia central do sistema no eixo dado (0=x, 1=y, 2=z).
+
+    O corte e por coordenada e nao pelo plano de recorte da camera, porque
+    'clip' depende de para onde a cena esta virada: girar a figura depois
+    mudaria o que aparece. Uma selecao fixa sobrevive a rotacao.
+    """
+    (x0, y0, z0), (x1, y1, z1) = cmd.get_extent("obj_lipid")
+    lo, hi = ((x0, x1), (y0, y1), (z0, z1))[eixo]
+    meio = (lo + hi) / 2.0
+    meia = (hi - lo) * float(fracao) / 2.0
+    letra = "xyz"[eixo]
+    cmd.select(name, "obj_lipid and (%s > %f) and (%s < %f)"
+               % (letra, meio - meia, letra, meio + meia))
+    return cmd.count_atoms(name)
+
+
+def preset7(eixo=1, paper=0):
+    """Corte transversal.
+
+    Lipideo: fatia central em spacefill, cor por camada quimica
+    Ions:    esferas, so os da fatia
+    Agua:    desligada
+
+    A figura de corte: o interior da bicamada fica exposto, com cabeca,
+    fosfato, glicerol e cauda visiveis na face cortada. Spacefill e nao
+    superficie porque a superficie de uma selecao parcial fecha sobre si mesma
+    e devolve uma casca, nao um corte.
+
+    O corte e uma selecao por coordenada, entao girar a cena depois nao muda o
+    que esta exposto.
+    """
+    if not prepare():
+        return
+    _reset()
+    cmd.delete("lip_slab")
+    if not _slab_selection("lip_slab", int(eixo)):
+        print("[membrane] a fatia saiu vazia: verifique obj_lipid.")
+        return
+    cmd.show("spheres", "lip_slab")
+    cmd.set("sphere_scale", 1.0, "obj_lipid")
+    color("moiety")
+    if has("obj_ions"):
+        cmd.show("spheres", "obj_ions and (obj_ions within 8 of lip_slab)")
+        cmd.set("sphere_scale", 0.5, "obj_ions")
+        _color_context()
+    cmd.deselect()
+    _finish("preset_memb7: corte transversal no eixo %s" % "xyz"[int(eixo)],
+            paper)
+
+
+def preset8(raio=5.0, paper=0):
+    """Lipideos anelares.
+
+    Lipideo: os que tocam a proteina em licorice colorido, o resto fantasma
+    Ions:    esferas pequenas
+    Agua:    desligada
+    Proteina: superficie opaca
+
+    Responde a quais lipideos estao em contato com a proteina, que e a
+    pergunta de anular shell. Sem proteina na sessao o preset nao tem o que
+    medir e avisa.
+    """
+    if not prepare():
+        return
+    if not has("obj_prot"):
+        print("[membrane] preset_memb8 precisa de proteina na sessao. "
+              "Use preset_memb4 para bicamada sem proteina.")
+        return
+    _reset()
+    cmd.delete("lip_ring")
+    cmd.select("lip_ring",
+               "byres (obj_lipid within %.1f of obj_prot)" % float(raio))
+    n = cmd.count_atoms("lip_ring")
+
+    cmd.show("sticks", "obj_lipid")
+    cmd.set("stick_radius", 0.10, "obj_lipid")
+    cmd.color("mv_glyc", "obj_lipid")
+    cmd.set("stick_transparency", 0.72, "obj_lipid")
+
+    if n:
+        cmd.set("stick_transparency", 0.0, "lip_ring")
+        cmd.set("stick_radius", 0.24, "lip_ring")
+        cmd.color("mv_tail_a", "lip_ring")
+        cmd.color("mv_head", "lip_ring and lip_head")
+        cmd.color("mv_phos", "lip_ring and lip_phos")
+    else:
+        print("[membrane] nenhum lipideo a %.1f A da proteina." % float(raio))
+
+    _ions_spheres(0.4)
+    cmd.deselect()
+    _finish("preset_memb8: lipideos anelares a %.1f A (%d atomos)"
+            % (float(raio), n), paper)
+
+
+def preset9(paper=0):
+    """Folhetos separados.
+
+    Lipideo: um folheto por superficie translucida, cores distintas
+    Ions:    esferas medias
+    Agua:    desligada
+    Fosfatos em esfera, marcando os dois planos
+
+    Para assimetria e espessura: as duas superficies deixam medir a separacao
+    entre os planos de fosfato a olho, e a diferenca de composicao entre os
+    folhetos aparece como diferenca de volume.
+    """
+    if not prepare():
+        return
+    _reset()
+    zmed = _phosphate_midplane()
+    if zmed is None:
+        print("[membrane] sem fosfatos: nao da para separar os folhetos.")
+        return
+    for nome, sinal, cor in (("lip_up", ">", "mv_tail_a"),
+                             ("lip_dn", "<", "mv_tail_b")):
+        cmd.delete(nome)
+        cmd.select(nome, "obj_lipid and (z %s %f)" % (sinal, zmed))
+        if cmd.count_atoms(nome):
+            cmd.show("surface", nome)
+            cmd.color(cor, nome)
+    cmd.set("transparency", 0.45, "obj_lipid")
+    cmd.show("spheres", "lip_phos")
+    cmd.set("sphere_scale", 0.55, "obj_lipid")
+    cmd.color("mv_phos", "lip_phos")
+    _ions_spheres(0.5)
+    cmd.deselect()
+    _finish("preset_memb9: folhetos separados (plano medio z=%.1f)" % zmed,
+            paper)
+
+
+def preset10(paper=0):
+    """Duas cores, para reducao e impressao.
+
+    Lipideo: cabecas claras em esfera, caudas escuras em isosuperficie
+    Ions:    desligados
+    Agua:    desligada
+
+    O preset desenhado para sobreviver a coluna de 85 mm e ao teste em escala
+    de cinza: duas cores so, separadas por claridade e nao por matiz, e
+    nenhum elemento secundario competindo por atencao. Tudo o que nao e a
+    bicamada sai da cena.
+    """
+    if not prepare():
+        return
+    _reset()
+    water("off")
+    if has("obj_ions"):
+        for rep in core.ALL_REPS:
+            cmd.hide(rep, "obj_ions")
+
+    if core.gaussian_isosurface("surf_tail", "map_tail", "lip_tail",
+                                grid=1.2, resolution=3.0, label="membrane"):
+        cmd.color("mv_tail_in", "surf_tail")
+    else:
+        cmd.show("sticks", "lip_tail")
+        cmd.set("stick_radius", 0.16, "obj_lipid")
+        cmd.color("mv_tail_in", "lip_tail")
+
+    cmd.show("spheres", "lip_head")
+    cmd.show("spheres", "lip_phos")
+    cmd.set("sphere_scale", 0.8, "obj_lipid")
+    cmd.color("mv_glyc", "lip_head")
+    cmd.color("mv_glyc", "lip_phos")
+    _finish("preset_memb10: duas cores para impressao", paper)
 
 
 def register():
     for name, fn in (("preset_memb1", preset1), ("preset_memb2", preset2),
                      ("preset_memb3", preset3), ("preset_memb4", preset4),
                      ("preset_memb5", preset5), ("preset_memb6", preset6),
+                     ("preset_memb7", preset7), ("preset_memb8", preset8),
+                     ("preset_memb9", preset9), ("preset_memb10", preset10),
                      ("memb_split", split), ("memb_color", color),
                      ("memb_water", water), ("memb_protein", protein),
                      ("memb_prepare", prepare)):

@@ -61,6 +61,44 @@ preset_memb5
 # Navegação, não figura. Linhas, pontos, oclusão ambiente desligada. Existe
 # para girar e enquadrar a cena antes de aplicar um preset caro.
 preset_memb6
+
+# Corte transversal. Uma fatia central do sistema em spacefill, com cabeça,
+# fosfato, glicerol e cauda expostos na face cortada. O corte é uma seleção
+# por coordenada, então girar a cena depois não muda o que está exposto.
+preset_memb7
+
+# O mesmo corte, no eixo x em vez do y. Aceita 0 para x, 1 para y, 2 para z.
+preset_memb7 eixo=0
+
+# Lipídeos anelares. Os que tocam a proteína ficam em licorice colorido e o
+# resto da membrana vira fantasma. Precisa de proteína na sessão.
+preset_memb8
+
+# O mesmo, com outro raio de contato em angstrom.
+preset_memb8 raio=7.0
+
+# Assimetria e espessura. Um folheto por superfície translúcida, em cores
+# distintas, com os fosfatos em esfera marcando os dois planos.
+preset_memb9
+
+# Para reduzir a uma coluna e imprimir em preto e branco. Duas cores só,
+# separadas por claridade e não por matiz, sem água nem íons competindo.
+preset_memb10
+```
+
+Todo preset aceita `paper`, a largura de coluna em milímetros. Sem ele a
+iluminação fica como está, para explorar na tela. Com ele a cena já sai no modo
+de periódico:
+
+```
+# explorar na tela, e decidir depois
+preset_memb5
+
+# já sair pronto para coluna simples
+preset_memb5 paper=85
+
+# largura dupla
+preset_memb5 paper=170
 ```
 
 Trocar o esquema de cor, sem trocar de preset:
@@ -158,7 +196,24 @@ preset_prot7
 # soluto e solvente. Não serve para analisar a proteína, porque o volume de
 # solvente a cobre por construção.
 preset_prot8
+
+# Caixa de simulação documentada: soluto em superfície, solvente como campo, e
+# as doze arestas da caixa desenhadas. As dimensões vão para o log, prontas
+# para a legenda. A caixa sai do extent do que está carregado, e não de um
+# CRYST1, que frame de dinâmica molecular costuma não ter.
+preset_prot9
+
+# Interface de contato. A superfície inteira fica translúcida e só os resíduos
+# que tocam a outra cadeia, ou o ligante, ficam opacos e em sticks. Precisa de
+# duas cadeias ou de um ligante.
+preset_prot10
+
+# O mesmo, com outro raio de contato.
+preset_prot10 raio=6.0
 ```
+
+Aqui também vale o `paper`: `preset_prot9 paper=170` sai direto no modo de
+periódico, em largura dupla.
 
 Esquemas de cor:
 

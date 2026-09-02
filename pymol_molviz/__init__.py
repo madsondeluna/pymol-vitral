@@ -13,7 +13,7 @@ Ou, se o pacote estiver no PYTHONPATH:
     import pymol_molviz; pymol_molviz.load()
 """
 
-__version__ = "1.0.0"
+__version__ = "1.1.0"
 
 _LOADED = False
 
@@ -35,8 +35,8 @@ def load(auto=True):
     _LOADED = True
 
     print("[molviz] v%s carregado." % __version__)
-    print("[molviz] membrana: preset_memb1..6, memb_color, memb_water")
-    print("[molviz] proteina: preset_prot1..8, prot_color, prot_water, "
+    print("[molviz] membrana: preset_memb1..10, memb_color, memb_water")
+    print("[molviz] proteina: preset_prot1..10, prot_color, prot_water, "
           "prot_ions")
     print("[molviz] comum:    mv_ao, mv_shadows, mv_realism, mv_paper, "
           "mv_grayscale, mv_extent, mv_render")

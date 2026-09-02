@@ -16,6 +16,10 @@ Para a sequência de comandos, ver `passo-a-passo.md`.
 | `preset_memb4` | superfície translúcida com licorice interno | esfera com malha de raio inflado | desligada | peptídeo inserido |
 | `preset_memb5` | caudas como isosuperfície contínua, cabeças em esfera | esferas opacas grandes | campo gaussiano | ilustração, sistema grande |
 | `preset_memb6` | linhas, cor por espécie | pontos | desligada | navegação, não figura |
+| `preset_memb7` | fatia central em spacefill, cor por camada | esferas, só as da fatia | desligada | o interior da bicamada, corte transversal |
+| `preset_memb8` | os que tocam a proteína em licorice, o resto fantasma | esferas pequenas | desligada | lipídeos anelares, contato proteína-lipídeo |
+| `preset_memb9` | uma superfície translúcida por folheto, fosfatos em esfera | esferas médias | desligada | assimetria e espessura dos folhetos |
+| `preset_memb10` | caudas escuras em isosuperfície, cabeças claras em esfera | desligados | desligada | redução para uma coluna, impressão em P&B |
 
 `preset_memb4` e `preset_memb6` desligam a água deliberadamente: no primeiro
 porque a superfície do solvente esconderia o peptídeo inserido, no segundo
@@ -25,6 +29,27 @@ porque ele existe para navegar rápido.
 ilustração científica, por trocar milhares de átomos de cauda por uma única
 isosuperfície. O nível dessa isosuperfície é derivado do histograma do mapa,
 não fixo: um valor fixo falha em silêncio quando a resolução gaussiana muda.
+
+### Argumentos
+
+Todo preset aceita `paper`, a largura de coluna em milímetros. Sem ele o preset
+só define representação e cor, e a iluminação fica como estava: é o modo de
+explorar na tela, com `mv_paper` depois se a figura for adiante. Com ele a cena
+já sai pronta para impressão numa linha só.
+
+```
+preset_memb5
+preset_memb5 paper=85
+preset_memb5 paper=170
+```
+
+`preset_memb7` aceita `eixo`, 0 para x, 1 para y (padrão) e 2 para z. O corte é
+uma seleção por coordenada e não o plano de recorte da câmera, então girar a
+cena depois não muda o que está exposto.
+
+`preset_memb8` aceita o raio de contato em angstrom, padrão 5.0, e precisa de
+proteína na sessão. `preset_memb9` precisa de fosfatos para achar o plano
+médio.
 
 ### Cor
 
@@ -58,9 +83,18 @@ previsível que `field`, que usa mapa gaussiano e exige calibrar o nível.
 | `preset_prot6` | all-atom licorice, cor por carga | peptídeos |
 | `preset_prot7` | cartoon com camada de solvatação e íons próximos | caixa de MD |
 | `preset_prot8` | superfície por carga dentro do volume de solvente | ilustrar o sistema simulado |
+| `preset_prot9` | superfície, campo de solvente e as doze arestas da caixa | dimensões da caixa, proporção soluto/solvente |
+| `preset_prot10` | superfície translúcida, resíduos de contato opacos e em sticks | onde duas cadeias, ou proteína e ligante, se tocam |
 
 `prot_auto` escolhe entre `preset_prot1` e `preset_prot6` pelo número de
 resíduos, com corte em 60.
+
+`preset_prot7` aceita o raio da camada, padrão 4.0. `preset_prot10` aceita o
+raio de contato, padrão 4.5, e precisa de duas cadeias ou de um ligante.
+
+`preset_prot9` desenha a caixa a partir do extent do que está carregado, e não
+de um registro CRYST1, que frame de dinâmica molecular costuma não ter. As
+dimensões vão para o log, prontas para a legenda.
 
 `preset_prot7` e `preset_prot8` respondem a perguntas diferentes: o primeiro
 analisa a proteína no contexto do solvente, o segundo ilustra o sistema como um
@@ -110,6 +144,18 @@ mv_grayscale 1
 mv_extent    obj_lipid
 mv_render    figura.png, 2000, 1500, 300
 ```
+
+A oclusão ambiente fica ligada em todos os presets, menos no `preset_memb6`,
+que a desliga para a navegação continuar fluida. Ela não alcança cartoon: o
+PyMOL a assa na geometria de esfera e de superfície, então um preset baseado em
+cartoon não carrega relevo de contato nenhum. Para figura com relevo, os
+caminhos são superfície (`preset_prot3`, `preset_prot9`) ou esferas
+(`preset_memb1`, `preset_memb7`).
+
+`mv_grayscale` reescreve cada cor nomeada em uso para a luminância dela, pela
+recomendação BT.601, e devolve as originais na saída. O PyMOL não tem ajuste de
+escala de cinza, então um gradiente aplicado por `spectrum` continua colorido e
+o log diz quantas cores ficaram de fora.
 
 Cada nível ajusta vários parâmetros em conjunto, não um isolado:
 

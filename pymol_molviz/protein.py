@@ -380,19 +380,28 @@ def _context(waters=0, show_ions=1, ligands=1, nucleic=1):
         cmd.set("sphere_transparency", 0.5, "obj_wat")
 
 
-def _finish(msg):
+def _finish(msg, paper=0):
+    """Fecha o preset. 'paper' liga o modo de periodico na mesma linha.
+
+    Sem 'paper' o preset so define representacao e cor, e a iluminacao fica
+    como estava: e o modo de explorar na tela, e mv_paper pode vir depois. Com
+    'paper', a largura de coluna em milimetros, a cena ja sai pronta para
+    figura. Os dois caminhos existem porque a mesma cena serve as duas coisas.
+    """
     cmd.rebuild()          # assa a oclusao ambiente na geometria nova
     ref = "obj_prot" if has("obj_prot") else "obj_nucl"
     if has(ref):
         cmd.orient(ref)
         cmd.zoom(ref, 4)
     print("[prot] %s" % msg)
+    if core.truthy_width(paper):
+        core.paper(float(paper))
 
 
 # =============================================================================
 # PRESETS
 # =============================================================================
-def preset1():
+def preset1(paper=0):
     """Cartoon suave por estrutura secundaria.
 
     Helice azul, folha vermelha, alca branca. Ligantes em sticks, agua
@@ -411,10 +420,10 @@ def preset1():
     cmd.cartoon("loop", "obj_prot and not (ss S or ss H)")
     color("ss")
     _context()
-    _finish("preset_prot1: cartoon por estrutura secundaria")
+    _finish("preset_prot1: cartoon por estrutura secundaria", paper)
 
 
-def preset2():
+def preset2(paper=0):
     """Cartoon com superficie fantasma.
 
     Mostra a topologia sem perder o contorno molecular. E o preset para sitio
@@ -431,10 +440,10 @@ def preset2():
     cmd.set("transparency", 0.55, "obj_prot")
     color("ss")
     _context()
-    _finish("preset_prot2: cartoon com superficie fantasma")
+    _finish("preset_prot2: cartoon com superficie fantasma", paper)
 
 
-def preset3():
+def preset3(paper=0):
     """Superficie solida por hidrofobicidade.
 
     Para analisar face de interacao: anfipaticidade, bolso hidrofobico,
@@ -448,10 +457,10 @@ def preset3():
     cmd.show("surface", "obj_prot")
     color("hydro")
     _context()
-    _finish("preset_prot3: superficie por hidrofobicidade")
+    _finish("preset_prot3: superficie por hidrofobicidade", paper)
 
 
-def preset4():
+def preset4(paper=0):
     """Spacefill por cadeia.
 
     Volume ocupado e empacotamento. Em complexo multi-cadeia e a forma mais
@@ -467,10 +476,10 @@ def preset4():
         cmd.show("spheres", "obj_lig")
         cmd.set("sphere_scale", 1.0, "obj_lig")
     _context(ligands=0)
-    _finish("preset_prot4: spacefill por cadeia")
+    _finish("preset_prot4: spacefill por cadeia", paper)
 
 
-def preset5():
+def preset5(paper=0):
     """Putty por fator B.
 
     A espessura codifica o fator B: regiao flexivel fica grossa e vermelha.
@@ -489,10 +498,10 @@ def preset5():
     cmd.set("cartoon_putty_radius", 0.35, "obj_prot")
     color("bfactor")
     _context()
-    _finish("preset_prot5: putty por fator B")
+    _finish("preset_prot5: putty por fator B", paper)
 
 
-def preset6():
+def preset6(paper=0):
     """All-atom licorice, cor por carga.
 
     Para peptideos, onde o cartoon comunica pouco: nao ha topologia global a
@@ -513,10 +522,10 @@ def preset6():
         print("[prot] aviso: %d residuos. Acima de %d o all-atom fica "
               "ilegivel; considere preset_prot1 ou preset_prot3."
               % (n_residues("obj_prot"), PEPTIDE_CUTOFF))
-    _finish("preset_prot6: all-atom por carga")
+    _finish("preset_prot6: all-atom por carga", paper)
 
 
-def preset7(shell=4.0):
+def preset7(shell=4.0, paper=0):
     """Sistema solvatado: proteina, camada de agua e ions proximos.
 
     O preset para caixa de MD. Descarta agua e ions de bulk, que numa caixa
@@ -532,10 +541,10 @@ def preset7(shell=4.0):
     _context(waters=0, show_ions=0)
     water("shell", shell)
     ions("shell", 6.0)
-    _finish("preset_prot7: sistema solvatado (camada de %.1f A)" % float(shell))
+    _finish("preset_prot7: sistema solvatado (camada de %.1f A)" % float(shell), paper)
 
 
-def preset8():
+def preset8(paper=0):
     """Caixa completa: proteina em superficie dentro do volume de solvente.
 
     Para ilustrar o sistema simulado como um todo — dimensao da caixa,
@@ -550,7 +559,118 @@ def preset8():
     _context(waters=0, show_ions=0)
     water("surface", transparency=0.72)
     ions("halo")
-    _finish("preset_prot8: caixa completa")
+    _finish("preset_prot8: caixa completa", paper)
+
+
+def _draw_box(name="obj_box", sel="all", cor="mv_lig"):
+    """Arestas da caixa de simulacao, como geometria propria.
+
+    'show cell' so desenha quando o arquivo traz CRYST1, e uma saida de
+    dinamica molecular convertida frame a frame costuma vir sem ele. Aqui as
+    doze arestas saem do extent do sistema, entao a caixa aparece sempre.
+
+    E a caixa envolvente do que esta carregado, nao o vetor periodico: com o
+    solvente presente as duas coincidem na pratica, e sem solvente a caixa
+    desenhada seria menor que a simulada.
+    """
+    from pymol.cgo import BEGIN, LINES, COLOR, VERTEX, END
+    (x0, y0, z0), (x1, y1, z1) = cmd.get_extent(sel)
+    v = [(x0, y0, z0), (x1, y0, z0), (x1, y1, z0), (x0, y1, z0),
+         (x0, y0, z1), (x1, y0, z1), (x1, y1, z1), (x0, y1, z1)]
+    arestas = ((0, 1), (1, 2), (2, 3), (3, 0),
+               (4, 5), (5, 6), (6, 7), (7, 4),
+               (0, 4), (1, 5), (2, 6), (3, 7))
+    rgb = core.PALETTE.get(cor, [0.4, 0.4, 0.4])
+    obj = [BEGIN, LINES, COLOR] + list(rgb)
+    for a, b in arestas:
+        obj += [VERTEX] + list(v[a]) + [VERTEX] + list(v[b])
+    obj.append(END)
+    cmd.delete(name)
+    cmd.load_cgo(obj, name)
+    return [x1 - x0, y1 - y0, z1 - z0]
+
+
+def preset9(paper=0):
+    """Caixa de simulacao.
+
+    Proteina: superficie opaca, cor por carga
+    Agua:     campo continuo translucido
+    Ions:     esferas
+    Caixa:    doze arestas em linha
+
+    Para a figura que descreve o sistema simulado: dimensao da caixa,
+    proporcao entre soluto e solvente, posicao do soluto dentro dela. As
+    dimensoes vao para o log, prontas para a legenda.
+
+    Difere de preset_prot8 por desenhar a caixa e por medir: o outro ilustra o
+    volume de solvente, este documenta o sistema.
+    """
+    if not prepare():
+        return
+    _reset()
+    cmd.show("surface", "obj_prot")
+    color("charge")
+    _context(waters=0, show_ions=0)
+    water("field", transparency=0.82)
+    ions("spheres")
+    dims = _draw_box("obj_box", "all")
+    _finish("preset_prot9: caixa de %.1f x %.1f x %.1f A" % tuple(dims), paper)
+
+
+def preset10(raio=4.5, paper=0):
+    """Interface de contato.
+
+    Proteina:  superficie translucida
+    Interface: residuos de contato em superficie opaca e sticks
+    Agua:      desligada
+
+    Os residuos de contato sao os que ficam a 'raio' de outra cadeia, ou do
+    ligante quando ha uma cadeia so. Responde a onde as duas partes se tocam,
+    que uma superficie inteira translucida nao mostra: tudo fica igualmente
+    visivel e nada se destaca.
+    """
+    if not prepare():
+        return
+    _reset()
+
+    chains = [c for c in cmd.get_chains("obj_prot")]
+    parceiro = None
+    if len(chains) > 1:
+        parceiro = "obj_prot and not chain '%s'" % chains[0]
+        alvo = "obj_prot and chain '%s'" % chains[0]
+        origem = "cadeia %s contra as demais" % (chains[0] or "sem nome")
+    elif has("obj_lig"):
+        parceiro, alvo = "obj_lig", "obj_prot"
+        origem = "proteina contra ligante"
+    else:
+        print("[prot] preset_prot10 precisa de duas cadeias ou de um "
+              "ligante. Use preset_prot3 para a superficie inteira.")
+        return
+
+    cmd.delete("prot_iface")
+    cmd.select("prot_iface",
+               "byres (%s within %.1f of (%s))" % (alvo, float(raio), parceiro))
+    n = n_residues("prot_iface")
+
+    cmd.show("surface", "obj_prot")
+    cmd.set("transparency", 0.62, "obj_prot")
+    color("chain")
+    if n:
+        cmd.set("transparency", 0.0, "prot_iface")
+        cmd.show("sticks", "prot_iface and not (name C+N+O)")
+        cmd.set("stick_radius", 0.18, "obj_prot")
+        cmd.color("mv_apolar", "prot_iface")
+        cmd.color("mv_pos", "prot_iface and resn %s" % BASIC)
+        cmd.color("mv_neg", "prot_iface and resn %s" % ACIDIC)
+    else:
+        print("[prot] nenhum residuo a %.1f A do parceiro." % float(raio))
+
+    if has("obj_lig"):
+        cmd.show("sticks", "obj_lig")
+        cmd.set("stick_radius", 0.22, "obj_lig")
+        cmd.color("mv_lig", "obj_lig")
+    cmd.deselect()
+    _finish("preset_prot10: interface, %s (%d residuos)" % (origem, n), paper)
 
 
 def auto():
@@ -568,6 +688,7 @@ def register():
                      ("preset_prot3", preset3), ("preset_prot4", preset4),
                      ("preset_prot5", preset5), ("preset_prot6", preset6),
                      ("preset_prot7", preset7), ("preset_prot8", preset8),
+                     ("preset_prot9", preset9), ("preset_prot10", preset10),
                      ("prot_split", split), ("prot_color", color),
                      ("prot_water", water), ("prot_ions", ions),
                      ("prot_restore_b", restore_bfactors),

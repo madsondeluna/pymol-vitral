@@ -65,6 +65,18 @@ def truthy(v):
     return bool(v)
 
 
+def truthy_width(v):
+    """Largura de coluna em milimetros, ou 0 para nao ligar o modo periodico.
+
+    Separada de truthy porque o argumento aqui nao e uma chave: '85' e '170'
+    sao valores, e truthy('85') seria falso por nao estar na lista de sim.
+    """
+    try:
+        return float(v) > 0
+    except (TypeError, ValueError):
+        return False
+
+
 def has(sel):
     try:
         return cmd.count_atoms(sel) > 0
@@ -448,7 +460,7 @@ def paper(width_mm=85, dpi=300):
     cmd.set("ray_trace_fog", 0)
     cmd.set("orthoscopic", 1)
     cmd.set("ray_trace_mode", 0)
-    cmd.set("grayscale", 0)
+    grayscale(0)          # devolve a cor, se um teste anterior deixou em cinza
     desaturate(0.0)
     cmd.rebuild()
 
@@ -459,6 +471,16 @@ def paper(width_mm=85, dpi=300):
     return px
 
 
+# RGB original de cada cor convertida por grayscale(). Vazio quando a cena
+# esta em cor.
+_GRAY_BACKUP = {}
+
+# Coeficientes de luminancia da recomendacao ITU-R BT.601, que e a conversao
+# que uma impressora monocromatica aplica. Um cinza pela media dos canais
+# daria outro resultado e nao serviria de teste.
+_LUMA = (0.299, 0.587, 0.114)
+
+
 def grayscale(on=1):
     """Teste de impressao em preto e branco.
 
@@ -466,10 +488,42 @@ def grayscale(on=1):
     figura colorida. Cores de luminancia proxima (o verde das cabecas contra o
     laranja das caudas, o azul das helices contra o vermelho das folhas) podem
     colapsar no mesmo tom. Se ocorrer, diferencie por claridade, nao so matiz.
+
+    O PyMOL nao tem ajuste de escala de cinza: cada cor em uso e reescrita
+    para a sua propria luminancia e depois devolvida. So alcanca cor com nome,
+    entao um gradiente aplicado por 'spectrum' continua colorido, e o log
+    avisa quando encontra um.
     """
-    cmd.set("grayscale", 1 if truthy(on) else 0)
+    global _GRAY_BACKUP
+    ligar = truthy(on)
+
+    if ligar and not _GRAY_BACKUP:
+        usados = set()
+        cmd.iterate("all", "usados.add(color)", space={"usados": usados})
+        nomes = dict((i, n) for n, i in cmd.get_color_indices())
+        anonimas = 0
+        for idx in usados:
+            nome = nomes.get(idx)
+            if nome is None:
+                anonimas += 1
+                continue
+            rgb = cmd.get_color_tuple(idx)
+            if rgb is None:
+                continue
+            _GRAY_BACKUP[nome] = list(rgb)
+            y = sum(c * k for c, k in zip(rgb, _LUMA))
+            cmd.set_color(nome, [y, y, y])
+        if anonimas:
+            print("[molviz] %d cores sem nome (gradiente) seguem coloridas."
+                  % anonimas)
+    elif not ligar and _GRAY_BACKUP:
+        for nome, rgb in _GRAY_BACKUP.items():
+            cmd.set_color(nome, rgb)
+        _GRAY_BACKUP = {}
+
+    cmd.recolor()
     cmd.rebuild()
-    print("[molviz] escala de cinza: %s" % ("on" if truthy(on) else "off"))
+    print("[molviz] escala de cinza: %s" % ("on" if ligar else "off"))
 
 
 def extent(sel):

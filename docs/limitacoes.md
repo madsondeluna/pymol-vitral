@@ -58,6 +58,22 @@ Uma seleção não pode ter o mesmo nome de um objeto já carregado. O pacote us
 prefixos (`obj_`, `lip_`, `wat_`) justamente por isso. Se ocorrer com um objeto
 seu, renomeie com `set_name antigo, novo`.
 
+**`preset_memb5` para com `Error: failed to get map state`**
+O mapa gaussiano saiu vazio. `map_new` do tipo `gaussian` tira a largura da
+gaussiana de cada átomo do fator B, e com a coluna B toda em 0.00 nada é
+depositado na grade. É exatamente o que um PDB escrito por dinâmica molecular
+traz. Nem `map_new` nem `isosurface` reclamam: o erro só aparece no histograma,
+e a mensagem não diz nada sobre a causa. O pacote agora escreve um B temporário
+e o devolve átomo a átomo, então isso está resolvido do lado dele. Num uso
+manual de `map_new`, confira `cmd.get_extent("nome_do_mapa")`: uma caixa
+unitária de -0.5 a 0.5 é mapa vazio.
+
+**`mv_grayscale` não é um ajuste do PyMOL**
+Não existe `set grayscale`. O comando converte cada cor nomeada em uso para a
+luminância dela e devolve as originais depois. A consequência: um gradiente
+aplicado por `spectrum`, como o de fator B do `preset_prot5`, usa cores sem
+nome e continua colorido no teste. O log diz quantas ficaram de fora.
+
 **A isosuperfície não aparece e o PyMOL diz `Invalid selection name`**
 O `isosurface` não gerou triângulo nenhum, e objeto vazio não é registrado. O
 nível não interceptou o mapa. O pacote deriva o nível do histograma justamente
