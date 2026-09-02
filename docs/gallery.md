@@ -119,7 +119,7 @@ preset_prot9
 
 | front | 90 deg | 180 deg |
 |---|---|---|
-| _(pending)_ | _(pending)_ | _(pending)_ |
+| ![preset_prot9 frente](img/prot9_frente.png) | ![preset_prot9 lado](img/prot9_lado.png) | ![preset_prot9 verso](img/prot9_verso.png) |
 
 ### `preset_prot10`
 
@@ -131,7 +131,7 @@ preset_prot10
 
 | front | 90 deg | 180 deg |
 |---|---|---|
-| _(pending)_ | _(pending)_ | _(pending)_ |
+| ![preset_prot10 frente](img/prot10_frente.png) | ![preset_prot10 lado](img/prot10_lado.png) | ![preset_prot10 verso](img/prot10_verso.png) |
 
 ## Membrane presets
 
