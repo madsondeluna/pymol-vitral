@@ -142,7 +142,13 @@ mv_paper       85
 mv_grayscale   1
 mv_extent      obj_lipid
 mv_render      figure.png, 2000, 1500, 300
+mv_reload
 ```
+
+`mv_reload` re-imports the package from disk. Running `molviz.pml` again does
+not: `import` finds the package already in `sys.modules` and hands back what is
+in memory, so an edit appears to have no effect and a preset keeps printing the
+previous version's message.
 
 Ambient occlusion is on in every preset except `preset_memb6`, which turns it
 off to keep navigation responsive. `ambient_occlusion_scale` is the sampling

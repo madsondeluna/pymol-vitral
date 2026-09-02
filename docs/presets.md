@@ -155,7 +155,12 @@ mv_paper     85
 mv_grayscale 1
 mv_extent    obj_lipid
 mv_render    figura.png, 2000, 1500, 300
+mv_reload
 ```
+
+`mv_reload` reimporta o pacote a partir do disco. Rodar `molviz.pml` de novo
+não faz isso: o `import` encontra o pacote já em `sys.modules` e devolve o que
+está na memória, então a edição parece não ter efeito.
 
 A oclusão ambiente fica ligada em todos os presets, menos no `preset_memb6`,
 que a desliga para a navegação continuar fluida. `ambient_occlusion_scale` é a

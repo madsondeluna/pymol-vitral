@@ -65,6 +65,32 @@ def truthy(v):
     return bool(v)
 
 
+def reload_package():
+    """Recarrega o pacote a partir do disco, sem reabrir o PyMOL.
+
+    'run molviz.pml' de novo NAO traz o codigo novo: o import encontra o pacote
+    ja em sys.modules e devolve o que esta na memoria, entao a sessao continua
+    rodando a versao antiga sem nenhum aviso. O sintoma e uma edicao que nao
+    surte efeito, ou um preset que imprime a mensagem antiga.
+
+    Isto apaga as entradas do pacote em sys.modules e importa de novo, o que
+    faz cmd.extend registrar as funcoes novas por cima das velhas.
+    """
+    import os
+    import sys
+
+    raiz = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    for nome in [n for n in list(sys.modules)
+                 if n == "pymol_molviz" or n.startswith("pymol_molviz.")]:
+        del sys.modules[nome]
+    if raiz not in sys.path:
+        sys.path.insert(0, raiz)
+
+    import pymol_molviz
+    pymol_molviz.load(auto=False)
+    print("[molviz] recarregado de %s" % raiz)
+
+
 def truthy_width(v):
     """Largura de coluna em milimetros, ou 0 para nao ligar o modo periodico.
 
@@ -569,5 +595,6 @@ def register_common():
                      ("mv_shadows", shadows), ("mv_realism", realism),
                      ("mv_desaturate", desaturate), ("mv_paper", paper),
                      ("mv_grayscale", grayscale), ("mv_extent", extent),
+                     ("mv_reload", reload_package),
                      ("mv_render", render)):
         cmd.extend(name, fn)
