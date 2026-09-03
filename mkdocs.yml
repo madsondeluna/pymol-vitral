@@ -1,4 +1,4 @@
-site_name: pymol-molviz
+site_name: pymol-vitral
 site_description: Visualization presets for PyMOL, for lipid bilayers, proteins and peptides
 site_url: https://madsondeluna.com/pymol-vitral/
 repo_url: https://github.com/madsondeluna/pymol-vitral
@@ -66,7 +66,7 @@ markdown_extensions:
 nav:
   # Uma pagina so com tudo: os vinte presets, as imagens e os comandos. O
   # sumario na coluna esquerda e o indice dela.
-  - pymol-molviz: index.md
+  - pymol-vitral: index.md
   - Reference (Portuguese):
       - Passo a passo: passo-a-passo.md
       - Presets: presets.md

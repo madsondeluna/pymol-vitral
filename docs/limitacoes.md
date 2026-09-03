@@ -181,7 +181,7 @@ comando, são duas linhas:
 
 ```
 /import sys; [sys.modules.pop(m) for m in list(sys.modules) if m.startswith('pymol_molviz')]
-run /caminho/pymol-molviz/molviz.pml
+run /caminho/pymol-vitral/molviz.pml
 ```
 
 **Comentário no fim da linha quebra o comando**

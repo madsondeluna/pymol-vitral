@@ -1,4 +1,4 @@
-# pymol-molviz
+# pymol-vitral
 
 Visualization presets for PyMOL, aimed at molecular simulation systems: lipid
 bilayers, proteins and peptides. The package splits the loaded system into
@@ -49,7 +49,7 @@ gmx trjconv -s topol.tpr -f traj.xtc -o frame.pdb -pbc mol -center -dump 0
 ### 2. Load the protocol
 
 ```
-run /path/to/pymol-molviz/molviz.pml
+run /path/to/pymol-vitral/molviz.pml
 ```
 
 It splits the system into objects, prints the counts and applies a starting
@@ -57,7 +57,7 @@ preset: membrane if lipids are present, protein otherwise. The log names the
 version and the directory it loaded from:
 
 ```
-[molviz] v1.2.0 carregado de /path/to/pymol-molviz/pymol_molviz
+[molviz] v1.2.0 carregado de /path/to/pymol-vitral/pymol_molviz
 ```
 
 Running it again always rereads from disk, so it doubles as the way to pick up
@@ -179,7 +179,7 @@ the same line: `preset_prot3 paper=85`.
 
 ```
 load prot/4hhb.pdb
-run /path/to/pymol-molviz/molviz.pml
+run /path/to/pymol-vitral/molviz.pml
 ```
 
 ### `preset_prot1` cartoon by secondary structure
@@ -412,7 +412,7 @@ the same way here.
 
 ```
 load memb/bilbo_preview.pdb
-run /path/to/pymol-molviz/molviz.pml
+run /path/to/pymol-vitral/molviz.pml
 ```
 
 ### `preset_memb1` stratified spheres
@@ -731,7 +731,7 @@ Written in Portuguese.
 ## Layout
 
 ```
-pymol-molviz/
+pymol-vitral/
 ├── molviz.pml              # entry point
 ├── pymol_molviz/
 │   ├── __init__.py         # command registration and system detection
@@ -746,10 +746,10 @@ pymol-molviz/
 ## Examples
 
 ```
-@/path/to/pymol-molviz/examples/figura_membrana.pml
-@/path/to/pymol-molviz/examples/figura_peptideo.pml
-@/path/to/pymol-molviz/examples/md_solvatada.pml
-@/path/to/pymol-molviz/examples/diagnostico.pml
+@/path/to/pymol-vitral/examples/figura_membrana.pml
+@/path/to/pymol-vitral/examples/figura_peptideo.pml
+@/path/to/pymol-vitral/examples/md_solvatada.pml
+@/path/to/pymol-vitral/examples/diagnostico.pml
 ```
 
 `diagnostico.pml` draws nothing. It lists residue names, atom names and the

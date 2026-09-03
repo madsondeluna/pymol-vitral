@@ -49,7 +49,7 @@ Em `pymol_molviz/protein.py`:
 ## Descobrir a nomenclatura de um sistema desconhecido
 
 ```
-@/caminho/pymol-molviz/examples/diagnostico.pml
+@/caminho/pymol-vitral/examples/diagnostico.pml
 ```
 
 Ele lista os resíduos mais frequentes, os nomes de átomo por resíduo e a razão

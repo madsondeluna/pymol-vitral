@@ -6,7 +6,7 @@ molecular: membranas lipidicas, proteinas e peptideos.
 
 Carregamento normal, de dentro do PyMOL:
 
-    run /caminho/pymol-molviz/molviz.pml
+    run /caminho/pymol-vitral/molviz.pml
 
 Ou, se o pacote estiver no PYTHONPATH:
 

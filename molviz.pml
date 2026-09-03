@@ -2,7 +2,7 @@
 #
 # Ponto de entrada. Carregue este arquivo de dentro do PyMOL:
 #
-#     run /caminho/pymol-molviz/molviz.pml
+#     run /caminho/pymol-vitral/molviz.pml
 #
 # Ele adiciona o diretorio do repositorio ao sys.path e registra todos os
 # comandos. Nao e preciso instalar nada nem mexer no PYTHONPATH.
