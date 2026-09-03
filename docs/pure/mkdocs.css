@@ -1,17 +1,37 @@
 /* Ponte entre a Pure Design Language e o tema Material do MkDocs.
    Nenhum valor literal: cada propriedade do Material recebe um token. */
 
+/* Um mapeamento so serve aos dois modos: o que muda entre claro e escuro sao
+   os valores dos tokens, nao qual token cada propriedade recebe. E o desenho
+   da Pure Design, e o motivo de nao existir uma segunda paleta aqui. */
+/* O seletor leva 'body' na frente de proposito. O atributo do esquema mora no
+   <body>, e o Material tambem declara estas variaveis num bloco de atributo
+   simples; empatados em especificidade, quem vence e quem carrega por ultimo,
+   o que e fragil. 'body[attr]' pesa um elemento a mais e decide sempre. Sem
+   isso o link da navegacao saia azul indigo no meio de uma paleta de grafite,
+   com os tokens corretos no <html> e o valor do tema no <body>. */
 :root,
-[data-md-color-scheme="pure"] {
+body[data-md-color-scheme="pure"],
+body[data-md-color-scheme="slate"] {
   --md-default-bg-color:        var(--bg);
   --md-default-fg-color:        var(--text);
   --md-default-fg-color--light: var(--muted);
   --md-default-fg-color--lighter: var(--secondary);
   --md-default-fg-color--lightest: var(--border);
 
-  --md-primary-bg-color:        var(--surface);
-  --md-primary-fg-color:        var(--text);
-  --md-accent-fg-color:         var(--accent);
+  /* Os nomes do Material sao invertidos em relacao ao que parecem:
+     'primary-fg' e a cor que PINTA o cabecalho, e 'primary-bg' e a cor do
+     texto sobre ele. Trocados, o titulo sai da mesma cor do fundo e some. */
+  --md-primary-fg-color:          var(--surface);
+  --md-primary-fg-color--light:   var(--surface-hover);
+  --md-primary-fg-color--dark:    var(--surface);
+  --md-primary-bg-color:          var(--text);
+  --md-primary-bg-color--light:   var(--muted);
+
+  --md-accent-fg-color:           var(--accent);
+  --md-accent-fg-color--transparent: transparent;
+  --md-accent-bg-color:           var(--bg);
+  --md-accent-bg-color--light:    var(--muted);
 
   --md-typeset-color:           var(--text);
   --md-typeset-a-color:         var(--accent);
@@ -26,7 +46,7 @@
   color-scheme: light;
 }
 
-[data-md-color-scheme="pure-dark"] {
+body[data-md-color-scheme="slate"] {
   color-scheme: dark;
 }
 
@@ -163,4 +183,50 @@ body,
   .md-typeset table:not([class]) a {
     min-height: var(--hit-min-touch);
   }
+}
+
+/* Tres elementos do Material pintam fundo proprio e so aparecem sob condicao,
+   entao passam despercebidos numa varredura visual: o link de pular conteudo,
+   que so surge no foco do teclado, o titulo da navegacao, que so existe abaixo
+   do ponto de quebra, e o aviso de copia. Sem token eles ficam claros no modo
+   escuro. */
+.md-skip,
+.md-nav__title,
+.md-dialog {
+  background: var(--surface);
+  color: var(--text);
+  border-radius: var(--radius-field);
+}
+
+.md-nav__title {
+  border-bottom: var(--hairline) solid var(--border);
+}
+
+/* Realce de sintaxe em niveis de tinta, nunca em cor de serie: e a mesma regra
+   que impede um slot de grafico de carregar estado. */
+.md-typeset .highlight .k,
+.md-typeset .highlight .kn,
+.md-typeset .highlight .nb {
+  color: var(--text);
+  font-weight: var(--weight-medium);
+}
+
+.md-typeset .highlight .c,
+.md-typeset .highlight .c1,
+.md-typeset .highlight .cm,
+.md-typeset .highlight .s,
+.md-typeset .highlight .s1,
+.md-typeset .highlight .s2,
+.md-typeset .highlight .mi,
+.md-typeset .highlight .mf {
+  color: var(--muted);
+}
+
+/* O Material pinta o item ativo com dois seletores de especificidade 0,2,0.
+   Uma classe sozinha nao alcanca nenhum dos dois. */
+.md-nav__item .md-nav__link--active,
+.md-nav--primary .md-nav__item--active > .md-nav__link,
+.md-nav__item .md-nav__link--active .md-ellipsis {
+  color: var(--text);
+  font-weight: var(--weight-medium);
 }
