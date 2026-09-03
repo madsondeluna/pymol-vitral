@@ -6,7 +6,7 @@ editar um dicionário e não varrer o código.
 
 ## Cores
 
-`PALETTE`, em `pymol_molviz/core.py`, define todas as cores em RGB explícito. A
+`PALETTE`, em `pymol_vitral/core.py`, define todas as cores em RGB explícito. A
 definição é explícita, e não por nome do PyMOL, porque a percepção das cores
 nomeadas varia com o gamma do display.
 
@@ -15,7 +15,7 @@ lipídica.
 
 ## Nomenclatura de lipídeos
 
-Em `pymol_molviz/membrane.py`:
+Em `pymol_vitral/membrane.py`:
 
 - **`LIPID_RESN`**: resíduos reconhecidos como lipídeo
 - **`INNER_LEAFLET_RESN`**: espécies tipicamente do folheto citoplasmático
@@ -36,7 +36,7 @@ hidrogênios tem 52.
 
 ## Escalas e grupos de resíduo
 
-Em `pymol_molviz/protein.py`:
+Em `pymol_vitral/protein.py`:
 
 - **`KD`**: escala Kyte-Doolittle. Trocar por outra escala de hidrofobicidade é
   substituir este dicionário.

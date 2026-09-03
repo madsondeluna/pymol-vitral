@@ -1,8 +1,8 @@
-# molviz.pml
+# vitral.pml
 #
 # Ponto de entrada. Carregue este arquivo de dentro do PyMOL:
 #
-#     run /caminho/pymol-vitral/molviz.pml
+#     run /caminho/pymol-vitral/vitral.pml
 #
 # Ele adiciona o diretorio do repositorio ao sys.path e registra todos os
 # comandos. Nao e preciso instalar nada nem mexer no PYTHONPATH.
@@ -26,9 +26,9 @@ if _here not in sys.path:
     sys.path.insert(0, _here)
 
 for _mod in [_m for _m in list(sys.modules)
-             if _m == "pymol_molviz" or _m.startswith("pymol_molviz.")]:
+             if _m == "pymol_vitral" or _m.startswith("pymol_vitral.")]:
     del sys.modules[_mod]
 
-import pymol_molviz
-pymol_molviz.load()
+import pymol_vitral
+pymol_vitral.load()
 python end

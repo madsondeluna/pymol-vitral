@@ -1,5 +1,5 @@
 """
-pymol_molviz.protein
+pymol_vitral.protein
 
 Presets de visualizacao para proteinas e peptideos.
 
@@ -9,8 +9,8 @@ obj_ions, obj_wat) e aplica combinacoes de representacao, cor e solvente.
 
 from pymol import cmd
 from pymol import util
-from pymol_molviz import core
-from pymol_molviz.core import has, truthy, n_residues
+from pymol_vitral import core
+from pymol_vitral.core import has, truthy, n_residues
 
 
 # =============================================================================

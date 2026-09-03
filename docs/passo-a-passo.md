@@ -25,7 +25,7 @@ estiver na sessão.
 
 ```
 load /caminho/membrana.pdb
-run /caminho/pymol-vitral/molviz.pml
+run /caminho/pymol-vitral/vitral.pml
 ```
 
 Ele aplica o `preset_memb1` e imprime as contagens. Procure a linha que começa
@@ -149,7 +149,7 @@ enable obj_wat
 
 ```
 load /caminho/proteina.pdb
-run /caminho/pymol-vitral/molviz.pml
+run /caminho/pymol-vitral/vitral.pml
 ```
 
 O preset inicial sai do tamanho: abaixo de 60 resíduos abre em all-atom por
@@ -273,7 +273,7 @@ está na cadeia lateral e não na topologia global.
 
 ```
 load /caminho/peptideo.pdb
-run /caminho/pymol-vitral/molviz.pml
+run /caminho/pymol-vitral/vitral.pml
 ```
 
 Abaixo de 60 resíduos ele já abre no `preset_prot6`.
@@ -314,7 +314,7 @@ Depois:
 
 ```
 load /caminho/frame.pdb
-run /caminho/pymol-vitral/molviz.pml
+run /caminho/pymol-vitral/vitral.pml
 
 # água a 4 A e íons a 6 A da proteína, o resto do solvente oculto
 preset_prot7
@@ -381,11 +381,11 @@ Divida o número de átomos de um lipídeo pelo número de moléculas dele. Pert
 12 é Martini, perto de 50 é all-atom.
 
 Os dicionários `LIPID_RESN` e `CG_NAMES` ficam no topo de
-`pymol_molviz/membrane.py`. Adicione os resíduos que apareceram e recarregue:
+`pymol_vitral/membrane.py`. Adicione os resíduos que apareceram e recarregue:
 
 ```
 delete obj_*
-run /caminho/pymol-vitral/molviz.pml
+run /caminho/pymol-vitral/vitral.pml
 ```
 
 ## Fluxo 7. Ajustar iluminação
@@ -441,7 +441,7 @@ Ou apague tudo e recarregue:
 ```
 delete all
 load /caminho/estrutura.pdb
-run /caminho/pymol-vitral/molviz.pml
+run /caminho/pymol-vitral/vitral.pml
 ```
 
 ## Fluxo 9. Carregar automaticamente em toda sessão
@@ -456,7 +456,7 @@ nano ~/.pymolrc
 Conteúdo:
 
 ```
-run /caminho/pymol-vitral/molviz.pml
+run /caminho/pymol-vitral/vitral.pml
 ```
 
 Salve com Ctrl+O, Enter, Ctrl+X. Com a sessão vazia o script não altera nada,

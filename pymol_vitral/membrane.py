@@ -1,5 +1,5 @@
 """
-pymol_molviz.membrane
+pymol_vitral.membrane
 
 Presets de visualizacao para sistemas de membrana.
 
@@ -8,8 +8,8 @@ obj_prot) e aplica combinacoes de representacao de lipideo, ion e solvente.
 """
 
 from pymol import cmd
-from pymol_molviz import core
-from pymol_molviz.core import has, truthy, n_residues
+from pymol_vitral import core
+from pymol_vitral.core import has, truthy, n_residues
 
 
 # =============================================================================

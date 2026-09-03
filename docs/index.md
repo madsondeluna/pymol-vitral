@@ -49,7 +49,7 @@ gmx trjconv -s topol.tpr -f traj.xtc -o frame.pdb -pbc mol -center -dump 0
 ### 2. Load the protocol
 
 ```
-run /path/to/pymol-vitral/molviz.pml
+run /path/to/pymol-vitral/vitral.pml
 ```
 
 It splits the system into objects, prints the counts and applies a starting
@@ -57,7 +57,7 @@ preset: membrane if lipids are present, protein otherwise. The log names the
 version and the directory it loaded from:
 
 ```
-[molviz] v1.2.0 carregado de /path/to/pymol-vitral/pymol_molviz
+[vitral] v1.2.0 carregado de /path/to/pymol-vitral/pymol_vitral
 ```
 
 Running it again always rereads from disk, so it doubles as the way to pick up
@@ -106,7 +106,7 @@ names that look like ions but are not.
 
 ## Install
 
-No install step. Clone or unpack the repository anywhere; `molviz.pml` resolves
+No install step. Clone or unpack the repository anywhere; `vitral.pml` resolves
 its own directory, so it works from any location.
 
 Requirements: PyMOL 2.x or 3.x, open-source or incentive. No external
@@ -179,7 +179,7 @@ the same line: `preset_prot3 paper=85`.
 
 ```
 load prot/4hhb.pdb
-run /path/to/pymol-vitral/molviz.pml
+run /path/to/pymol-vitral/vitral.pml
 ```
 
 ### `preset_prot1` cartoon by secondary structure
@@ -412,7 +412,7 @@ the same way here.
 
 ```
 load memb/bilbo_preview.pdb
-run /path/to/pymol-vitral/molviz.pml
+run /path/to/pymol-vitral/vitral.pml
 ```
 
 ### `preset_memb1` stratified spheres
@@ -663,7 +663,7 @@ mv_render      figure.png, 2000, 1500, 300
 mv_reload
 ```
 
-`mv_reload` re-imports the package from disk. Running `molviz.pml` again does
+`mv_reload` re-imports the package from disk. Running `vitral.pml` again does
 not: `import` finds the package already in `sys.modules` and hands back what is
 in memory, so an edit appears to have no effect and a preset keeps printing the
 previous version's message.
@@ -732,8 +732,8 @@ Written in Portuguese.
 
 ```
 pymol-vitral/
-├── molviz.pml              # entry point
-├── pymol_molviz/
+├── vitral.pml              # entry point
+├── pymol_vitral/
 │   ├── __init__.py         # command registration and system detection
 │   ├── core.py             # palette, material, lighting, output
 │   ├── membrane.py         # six membrane presets

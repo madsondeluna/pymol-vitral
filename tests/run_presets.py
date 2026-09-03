@@ -24,7 +24,7 @@ from pymol import cmd
 def _raiz():
     cand = os.getcwd()
     for _ in range(4):
-        if os.path.isdir(os.path.join(cand, "pymol_molviz")):
+        if os.path.isdir(os.path.join(cand, "pymol_vitral")):
             return cand
         cand = os.path.dirname(cand)
     raise RuntimeError("rode a partir da raiz do repositorio: "
@@ -38,7 +38,7 @@ for caminho in (RAIZ, AQUI):
         sys.path.insert(0, caminho)
 
 import make_systems                                  # noqa: E402
-from pymol_molviz import core, membrane, protein     # noqa: E402
+from pymol_vitral import core, membrane, protein     # noqa: E402
 
 # preset -> objeto que ele promete criar, e se a oclusao ambiente fica ligada.
 PROMETE_SUPERFICIE = {"preset_memb5": "surf_tail", "preset_memb10": "surf_tail"}

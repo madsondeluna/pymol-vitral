@@ -19,7 +19,7 @@ from pymol import cmd
 def _raiz():
     cand = os.getcwd()
     for _ in range(4):
-        if os.path.isdir(os.path.join(cand, "pymol_molviz")):
+        if os.path.isdir(os.path.join(cand, "pymol_vitral")):
             return cand
         cand = os.path.dirname(cand)
     raise RuntimeError("rode a partir da raiz do repositorio")
@@ -29,8 +29,8 @@ RAIZ = _raiz()
 if RAIZ not in sys.path:
     sys.path.insert(0, RAIZ)
 
-import pymol_molviz                                   # noqa: E402
-from pymol_molviz import membrane, protein            # noqa: E402
+import pymol_vitral                                   # noqa: E402
+from pymol_vitral import membrane, protein            # noqa: E402
 
 SAIDA = os.path.join(RAIZ, "docs", "img")
 LARGURA, ALTURA, DPI = 560, 440, 90
@@ -111,7 +111,7 @@ def render(modulo, prefixo, indices, vistas, arquivo, obj_zoom, margem,
 if not os.path.isdir(SAIDA):
     os.makedirs(SAIDA)
 
-pymol_molviz.load(auto=False)
+pymol_vitral.load(auto=False)
 
 render(protein, "prot", range(1, 11), VISTAS_PROT,
        os.path.join(RAIZ, "prot", "4hhb.pdb"), "obj_prot", MARGEM_PROT)

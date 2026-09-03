@@ -1,5 +1,5 @@
 # Figura de membrana para periodico, coluna simples.
-# Pre-requisitos: estrutura carregada e molviz.pml executado.
+# Pre-requisitos: estrutura carregada e vitral.pml executado.
 
 preset_memb5
 memb_color leaflet

@@ -1,5 +1,5 @@
 # Duas faces de um peptideo, para avaliar anfipaticidade.
-# Pre-requisitos: peptideo carregado e molviz.pml executado.
+# Pre-requisitos: peptideo carregado e vitral.pml executado.
 
 # Face de carga
 preset_prot6

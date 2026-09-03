@@ -1,6 +1,6 @@
 # legacy
 
-Scripts anteriores ao pacote `pymol_molviz`, mantidos por dois motivos.
+Scripts anteriores ao pacote `pymol_vitral`, mantidos por dois motivos.
 
 `membrane_popc_style.pml` é um script linear, sem funções: aplica o mesmo estilo
 de cima a baixo, na ordem em que os comandos rodam. É mais fácil de ler do que o

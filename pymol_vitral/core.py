@@ -1,11 +1,11 @@
 """
-pymol_molviz.core
+pymol_vitral.core
 
 Base compartilhada pelos modulos de membrana e de proteina: paleta, material,
 iluminacao, oclusao ambiente, sombras, modo periodico e exportacao.
 
-Nao e usado diretamente. Carregue pymol_molviz.membrane ou
-pymol_molviz.protein, que importam este modulo.
+Nao e usado diretamente. Carregue pymol_vitral.membrane ou
+pymol_vitral.protein, que importam este modulo.
 """
 
 from pymol import cmd
@@ -130,7 +130,7 @@ def ion_selection(src, quiet=0):
         sel += " and not resn %s" % "+".join(f[0] for f in fora)
         if not truthy(quiet):
             for resn, n_at, n_res in fora:
-                print("[molviz] '%s' tem %.0f atomos por residuo: nao e ion, "
+                print("[vitral] '%s' tem %.0f atomos por residuo: nao e ion, "
                       "%d moleculas tratadas como lipideo."
                       % (resn, n_at / float(n_res), n_res))
     return sel
@@ -184,7 +184,7 @@ def fix_elements(sel="all", quiet=0):
     cmd.alter(alvo, "vdw = _vdw.get(elem, 1.70)", space={"_vdw": VDW})
     cmd.rebuild()
     if not truthy(quiet):
-        print("[molviz] %d atomos com elemento inferido errado (%s): "
+        print("[vitral] %d atomos com elemento inferido errado (%s): "
               "corrigidos pelo nome do atomo."
               % (n, ", ".join(suspeitos[:6])))
     return n
@@ -193,7 +193,7 @@ def fix_elements(sel="all", quiet=0):
 def reload_package():
     """Recarrega o pacote a partir do disco, sem reabrir o PyMOL.
 
-    'run molviz.pml' de novo NAO traz o codigo novo: o import encontra o pacote
+    'run vitral.pml' de novo NAO traz o codigo novo: o import encontra o pacote
     ja em sys.modules e devolve o que esta na memoria, entao a sessao continua
     rodando a versao antiga sem nenhum aviso. O sintoma e uma edicao que nao
     surte efeito, ou um preset que imprime a mensagem antiga.
@@ -206,14 +206,14 @@ def reload_package():
 
     raiz = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     for nome in [n for n in list(sys.modules)
-                 if n == "pymol_molviz" or n.startswith("pymol_molviz.")]:
+                 if n == "pymol_vitral" or n.startswith("pymol_vitral.")]:
         del sys.modules[nome]
     if raiz not in sys.path:
         sys.path.insert(0, raiz)
 
-    import pymol_molviz
-    pymol_molviz.load(auto=False)
-    print("[molviz] recarregado de %s" % raiz)
+    import pymol_vitral
+    pymol_vitral.load(auto=False)
+    print("[vitral] recarregado de %s" % raiz)
 
 
 def truthy_width(v):
@@ -475,7 +475,7 @@ def ambient_occlusion(strength="medium"):
     sobre cartoon.
     """
     if strength not in AO_LEVELS:
-        print("[molviz] niveis: %s" % ", ".join(AO_LEVELS))
+        print("[vitral] niveis: %s" % ", ".join(AO_LEVELS))
         return
     mode, amb, direct, reflect, scale = AO_LEVELS[strength]
     cmd.set("ambient_occlusion_mode", mode)
@@ -485,7 +485,7 @@ def ambient_occlusion(strength="medium"):
     if scale:
         cmd.set("ambient_occlusion_scale", scale)
     cmd.rebuild()
-    print("[molviz] oclusao: %s (nao atua sobre cartoon)" % strength)
+    print("[vitral] oclusao: %s (nao atua sobre cartoon)" % strength)
 
 
 SHADOW_LEVELS = {
@@ -509,7 +509,7 @@ def shadows(level="soft"):
     mais tempo de render que 'hard', nao menos.
     """
     if level not in SHADOW_LEVELS:
-        print("[molviz] niveis: %s" % ", ".join(SHADOW_LEVELS))
+        print("[vitral] niveis: %s" % ", ".join(SHADOW_LEVELS))
         return
     shadow, nlight, direct, ambient, decay = SHADOW_LEVELS[level]
     cmd.set("ray_shadow", shadow)
@@ -520,7 +520,7 @@ def shadows(level="soft"):
     cmd.set("ray_shadow_decay_range", 1.8)
     cmd.set("ray_transparency_shadows", 0)
     cmd.rebuild()
-    print("[molviz] sombras: %s. Visiveis apenas apos 'ray'." % level)
+    print("[vitral] sombras: %s. Visiveis apenas apos 'ray'." % level)
 
 
 def realism(mode="studio", desat=1):
@@ -544,7 +544,7 @@ def realism(mode="studio", desat=1):
         "flat":     (0.55, 0.45, 0.20, 2, 0, 0, 0, 0, 20),
     }
     if mode not in presets:
-        print("[molviz] modos: %s" % ", ".join(presets))
+        print("[vitral] modos: %s" % ", ".join(presets))
         return
 
     amb, direct, refl, nlight, shad, ao, scale, fog, fov = presets[mode]
@@ -579,7 +579,7 @@ def realism(mode="studio", desat=1):
     if truthy(desat):
         desaturate(0.18)
     cmd.rebuild()
-    print("[molviz] realismo: %s. Completo apenas apos 'ray'." % mode)
+    print("[vitral] realismo: %s. Completo apenas apos 'ray'." % mode)
 
 
 def desaturate(amount=0.18):
@@ -635,8 +635,8 @@ def paper(width_mm=85, dpi=300):
     cmd.rebuild()
 
     px = int(round(float(width_mm) / 25.4 * float(dpi)))
-    print("[molviz] modo periodico. %s mm a %s dpi = %d px." % (width_mm, dpi, px))
-    print("[molviz] renderize: mv_render figura.png, %d, %d, %s"
+    print("[vitral] modo periodico. %s mm a %s dpi = %d px." % (width_mm, dpi, px))
+    print("[vitral] renderize: mv_render figura.png, %d, %d, %s"
           % (px, int(px * 0.75), dpi))
     return px
 
@@ -684,7 +684,7 @@ def grayscale(on=1):
             y = sum(c * k for c, k in zip(rgb, _LUMA))
             cmd.set_color(nome, [y, y, y])
         if anonimas:
-            print("[molviz] %d cores sem nome (gradiente) seguem coloridas."
+            print("[vitral] %d cores sem nome (gradiente) seguem coloridas."
                   % anonimas)
     elif not ligar and _GRAY_BACKUP:
         for nome, rgb in _GRAY_BACKUP.items():
@@ -693,7 +693,7 @@ def grayscale(on=1):
 
     cmd.recolor()
     cmd.rebuild()
-    print("[molviz] escala de cinza: %s" % ("on" if ligar else "off"))
+    print("[vitral] escala de cinza: %s" % ("on" if ligar else "off"))
 
 
 def extent(sel):
@@ -703,11 +703,11 @@ def extent(sel):
     pratico e informar a dimensao no texto.
     """
     if not has(sel):
-        print("[molviz] selecao vazia: %s" % sel)
+        print("[vitral] selecao vazia: %s" % sel)
         return
     (x1, y1, z1), (x2, y2, z2) = cmd.get_extent(sel)
     d = (x2 - x1, y2 - y1, z2 - z1)
-    print("[molviz] %s: %.1f x %.1f x %.1f A (%.1f x %.1f x %.1f nm)"
+    print("[vitral] %s: %.1f x %.1f x %.1f A (%.1f x %.1f x %.1f nm)"
           % ((sel,) + d + tuple(v / 10.0 for v in d)))
     return d
 
@@ -724,7 +724,7 @@ def render(filename="figura.png", width=3000, height=2400, dpi=600,
     cmd.set("hash_max", 400)
     cmd.ray(int(width), int(height))
     cmd.png(filename, dpi=int(dpi))
-    print("[molviz] salvo: %s (%dx%d, %s dpi)" % (filename, width, height, dpi))
+    print("[vitral] salvo: %s (%dx%d, %s dpi)" % (filename, width, height, dpi))
 
 
 def register_common():

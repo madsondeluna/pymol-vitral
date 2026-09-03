@@ -172,7 +172,7 @@ só. Copie uma linha por vez, ou salve o bloco num arquivo e use `run` sobre ele
 `@arquivo.pml` ou `File > Run Script`.
 
 **Editei o código e nada mudou**
-`run molviz.pml` de novo não recarrega. O `import` encontra o pacote já em
+`run vitral.pml` de novo não recarrega. O `import` encontra o pacote já em
 `sys.modules` e devolve o que está na memória, sem ler o disco e sem avisar. O
 sintoma é uma edição que não surte efeito, ou um preset que imprime a mensagem
 da versão anterior. Use `mv_reload`, que apaga as entradas do pacote em
@@ -180,8 +180,8 @@ da versão anterior. Use `mv_reload`, que apaga as entradas do pacote em
 comando, são duas linhas:
 
 ```
-/import sys; [sys.modules.pop(m) for m in list(sys.modules) if m.startswith('pymol_molviz')]
-run /caminho/pymol-vitral/molviz.pml
+/import sys; [sys.modules.pop(m) for m in list(sys.modules) if m.startswith('pymol_vitral')]
+run /caminho/pymol-vitral/vitral.pml
 ```
 
 **Comentário no fim da linha quebra o comando**
