@@ -52,12 +52,9 @@ markdown_extensions:
   - pymdownx.inlinehilite
 
 nav:
-  - Overview: index.md
-  - Presets:
-      - Protein: presets/protein.md
-      - Membrane: presets/membrane.md
-  - Commands: commands.md
-  - Development: development.md
+  # Uma pagina so com tudo: os vinte presets, as imagens e os comandos. O
+  # sumario na coluna esquerda e o indice dela.
+  - pymol-molviz: index.md
   - Reference (Portuguese):
       - Passo a passo: passo-a-passo.md
       - Presets: presets.md
