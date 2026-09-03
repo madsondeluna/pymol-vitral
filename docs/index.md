@@ -126,3 +126,47 @@ the side panel.
 | `obj_lig` | ligands |
 | `obj_nucl` | nucleic acid |
 
+### How the lipid layers are found
+
+`obj_lipid` is split into four layers, and none of them comes from a list of
+atom names: nomenclature varies between CHARMM, Berger, Slipids and GROMOS
+while the topology does not.
+
+| Layer | Criterion |
+|---|---|
+| `lip_phos` | phosphorus plus the oxygens bonded to it |
+| `lip_head` | nitrogen and its neighbouring carbons, plus whatever sits beyond the phosphate |
+| `lip_glyc` | the remaining ester oxygens and the carbons adjacent to them |
+| `lip_tail` | the complement |
+
+The head takes three passes, in this order, and each one only fills what the
+previous left empty.
+
+**Nitrogen.** Reaches choline and ethanolamine, so PC and PE resolve
+chemically. It is also the only pass that works on coarse-grained systems.
+
+**Position.** Phosphatidylglycerol, phosphatidylinositol, phosphatidylserine
+and cardiolipin carry no nitrogen at all, and in a mixed system that leaves
+most lipids with no head: the layer disappears from the figure and `moiety`
+colouring shows three bands instead of four. What defines a polar head is not
+its chemistry, which varies by species, but its position: it is the part facing
+the solvent, beyond the phosphate. The comparison is per molecule against its
+own phosphorus, not against the mean of the leaflet, because with the mean the
+molecules sitting deeper than average lose the head entirely. This assumes the
+membrane normal along z, the same premise as `memb_color leaflet`.
+
+**Name.** Two cases escape position, and neither is a failure of it: a head
+folded inwards is not beyond the phosphate, and the central glycerol of
+cardiolipin sits *between* the two phosphates, so it is more internal than they
+are by construction. For those there is a CHARMM dictionary, applied per
+species and only where fewer than half the molecules were left uncovered. The
+log says when it fires.
+
+Measured on a mixed system of 200 lipids across six species plus cardiolipin:
+
+| Passes | Lipids with a head |
+|---|---|
+| Nitrogen only | 29 per cent |
+| Nitrogen and position | 84 per cent |
+| All three | 100 per cent |
+
