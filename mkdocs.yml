@@ -13,24 +13,6 @@ theme:
   # A tipografia vem da Pure Design Language, nao do Material: Public Sans para
   # linguagem, Spline Sans Mono para dado, Archivo para titulo de secao.
   font: false
-  palette:
-    # primary e accent ficam em 'custom' de proposito. Com uma cor nomeada, o
-    # Material declara --md-typeset-a-color e companhia no proprio <body>, onde
-    # o atributo mora, e essa declaracao local vence a heranca dos tokens: o
-    # link sai azul indigo no meio de uma paleta de grafite. Em 'custom' ele
-    # nao injeta cor nenhuma e o mapeamento da Pure e o unico que vale.
-    - scheme: pure
-      primary: custom
-      accent: custom
-      toggle:
-        icon: material/weather-night
-        name: Dark
-    - scheme: slate
-      primary: custom
-      accent: custom
-      toggle:
-        icon: material/weather-sunny
-        name: Light
   features:
     - navigation.instant
     - navigation.tracking
@@ -44,11 +26,20 @@ theme:
     - search.highlight
 
 extra_javascript:
-  - pure/scheme.js
+  - pure/mode-switch.js
+  - pure/preset-grid.js
+  - pure/toc-labels.js
+  - pure/light.js
 
 extra_css:
+  # A ordem e a que a linguagem define: tokens, patterns, light, motion. O
+  # arquivo de ponte vem por ultimo, porque e ele que reconcilia a Pure com os
+  # componentes do Material.
   - https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,300;400&family=Public+Sans:wght@300;400;500;600&family=Spline+Sans+Mono:wght@400;500&display=swap
   - pure/tokens.css
+  - pure/patterns.css
+  - pure/light.css
+  - pure/motion.css
   - pure/mkdocs.css
 
 markdown_extensions:

@@ -230,3 +230,352 @@ body,
   color: var(--text);
   font-weight: var(--weight-medium);
 }
+
+/* =========================================================================
+   Refinamento com a linguagem completa
+   patterns.css entra depois de tokens.css e traz os componentes. Ele tambem
+   traz tres regras de elemento, e uma delas colide aqui: 'a { color: inherit;
+   text-decoration: none }' apaga a distincao de link, o que e proposital num
+   site cujos links sao todos componentes, e errado numa pagina de texto
+   corrido onde o link precisa se anunciar.
+   ========================================================================= */
+.md-typeset a:not(.md-button):not(.headerlink):not(.preset-row) {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+  text-decoration-thickness: 1px;
+  text-decoration-color: var(--border);
+}
+
+.md-typeset a:not(.md-button):not(.headerlink):not(.preset-row):hover {
+  text-decoration-color: var(--accent);
+}
+
+/* Cada preset e um cartao, como as secoes do site: superficie propria,
+   contorno de fio e o raio de superficie da escala concentrica. */
+.md-typeset h3[id^="preset_"] {
+  margin-top: var(--space-48);
+  padding-top: var(--space-24);
+  border-top: var(--hairline) solid var(--border);
+}
+
+/* O rotulo da pergunta que o preset responde, no lugar do eyebrow do site. */
+.md-typeset h3[id^="preset_"] + p {
+  font-family: var(--font-mono);
+  font-size: var(--text-12);
+  letter-spacing: var(--tracking-eyebrow);
+  color: var(--muted);
+  margin-bottom: var(--space-16);
+}
+
+/* Numero e identificador em mono, que e a regra de dado da linguagem. */
+.md-typeset table:not([class]) td:first-child {
+  font-family: var(--font-mono);
+  font-size: var(--text-13);
+}
+
+/* As duas vistas de cada preset assentam sobre vidro fosco: a figura sai do
+   PyMOL com fundo branco opaco, e sobre a pagina escura ela flutuava como um
+   retangulo solto. O fosco e a textura da linguagem que carrega conteudo
+   proprio, e e a unica que leva granulado, entao a moldura tem materia em vez
+   de ser so um contorno.
+
+   A cor de fundo vem antes do gradiente porque '--glass-fill' e um gradiente:
+   no atalho 'background' ele preencheria a imagem e deixaria a cor
+   transparente. E a declaracao padrao de backdrop-filter vem depois da
+   prefixada, senao o minificador descarta o par e o desfoque some. */
+.md-typeset table:not([class]) td:has(img) {
+  background-color: var(--surface);
+  background-image: var(--glass-fill);
+  -webkit-backdrop-filter: blur(var(--glass-blur-frost)) saturate(var(--glass-saturate));
+  backdrop-filter: blur(var(--glass-blur-frost)) saturate(var(--glass-saturate));
+  padding: var(--space-16);
+}
+
+.md-typeset table:not([class]) img {
+  border: var(--hairline) solid var(--glass-edge, var(--border));
+  border-radius: var(--radius-media);
+  box-shadow: var(--shadow-glass-rest);
+  background: transparent;
+  mix-blend-mode: normal;
+}
+
+/* A superficie de codigo e vidro fosco, a textura que carrega texto proprio.
+   '--glass-fill' e um gradiente, nao uma cor: usado no atalho 'background'
+   ele preenche a imagem e deixa a COR de fundo transparente, e o bloco fica
+   sem superficie nenhuma. A cor solida vem antes, o gradiente por cima.
+   A ordem do backdrop-filter tambem importa: a declaracao padrao vai por
+   ultimo, senao o minificador descarta o par e o desfoque some. */
+.md-typeset pre > code {
+  background-color: var(--surface);
+  background-image: var(--glass-fill);
+  color: var(--text);
+  -webkit-backdrop-filter: blur(var(--glass-blur-frost));
+  backdrop-filter: blur(var(--glass-blur-frost));
+}
+
+.md-typeset pre > code,
+.md-typeset pre > code span:not([class]) { color: var(--text); }
+
+/* Cabecalho como superficie de vidro profundo, igual a barra do site. */
+.md-header {
+  background-color: var(--surface);
+  background-image: var(--glass-fill);
+  -webkit-backdrop-filter: blur(var(--glass-blur-deep)) saturate(var(--glass-saturate));
+  backdrop-filter: blur(var(--glass-blur-deep)) saturate(var(--glass-saturate));
+}
+
+/* Titulo de secao pela largura da Archivo, ja declarado acima, com a escala
+   de espaco da linguagem em vez da do Material. */
+.md-typeset h1 { margin-bottom: var(--space-24); }
+.md-typeset h2 {
+  margin-top: var(--space-96);
+  margin-bottom: var(--space-24);
+}
+
+/* A camada de luz precisa de contexto de empilhamento proprio, senao o plano
+   de luz escorrega para tras do ancestral. */
+.md-typeset h3[id^="preset_"],
+.md-header {
+  isolation: isolate;
+}
+
+/* Alternador de modo: um botao de icone na barra, do tamanho de alvo da
+   linguagem, sem rotulo. */
+.pure-mode-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: auto;
+  width: var(--control-lg);
+  height: var(--control-lg);
+  border: none;
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  transition: background-color var(--duration-5) var(--ease-out-soft);
+}
+
+.pure-mode-toggle:hover { background: var(--surface-hover); }
+
+.pure-mode-toggle:focus-visible {
+  outline: var(--focus-ring) solid var(--text);
+  outline-offset: var(--focus-offset);
+}
+
+@media (pointer: coarse) {
+  .pure-mode-toggle {
+    min-width: var(--hit-min-touch);
+    min-height: var(--hit-min-touch);
+  }
+}
+
+/* Indice de presets: uma linha por preset, fio entre elas, colunas alinhadas.
+   O numero e o comando em mono, porque sao dado; a funcao e a pergunta em
+   texto. Sem caixa: o indice nao disputa com as figuras que vem abaixo. */
+.preset-index {
+  margin: var(--space-24) 0 var(--space-48);
+  border-top: var(--hairline) solid var(--border);
+}
+
+.preset-row {
+  display: grid;
+  grid-template-columns: 2.5rem minmax(7.5rem, auto) minmax(9rem, 1fr) 1.5fr 1rem;
+  gap: var(--space-16);
+  align-items: baseline;
+  padding: var(--space-8) var(--space-8);
+  border-bottom: var(--hairline) solid var(--border);
+  color: var(--text);
+  transition: background-color var(--duration-5) var(--ease-out-soft);
+}
+
+.md-typeset a.preset-row,
+.md-typeset a.preset-row:hover,
+.md-typeset a.preset-row * { text-decoration: none; }
+
+.preset-row:hover { background: var(--surface-hover); }
+
+.preset-row:focus-visible {
+  outline: var(--focus-ring) solid var(--text);
+  outline-offset: calc(var(--focus-offset) * -1);
+}
+
+.preset-row__num,
+.preset-row__cmd {
+  font-family: var(--font-mono);
+  font-size: var(--text-12);
+}
+
+.preset-row__num { color: var(--secondary); }
+.preset-row__cmd { color: var(--text); }
+
+.preset-row__role {
+  font-size: var(--text-14);
+  color: var(--text);
+}
+
+.preset-row__desc {
+  font-size: var(--text-13);
+  color: var(--muted);
+}
+
+.preset-row__go {
+  color: var(--muted);
+  opacity: 0;
+  transition: opacity var(--duration-5) var(--ease-out-soft);
+  align-self: center;
+}
+
+.preset-row:hover .preset-row__go,
+.preset-row:focus-visible .preset-row__go { opacity: 1; }
+
+/* Abaixo do ponto de quebra as colunas viram duas linhas: cinco colunas num
+   retangulo de 375px deixam cada uma com trinta pixels. */
+@media (max-width: 768px) {
+  .preset-row {
+    grid-template-columns: 2.5rem 1fr;
+    gap: var(--space-4) var(--space-12);
+    padding: var(--space-12) var(--space-8);
+  }
+  .preset-row__role { grid-column: 2; }
+  .preset-row__desc { grid-column: 2; }
+  .preset-row__go { display: none; }
+}
+
+@media (pointer: coarse) {
+  .preset-row { min-height: var(--hit-min-touch); }
+}
+
+/* O SVG do sprite entra sem atributo de dimensao, e '.icon' usa propriedades
+   logicas que o Material sobrescreve dentro de .md-typeset. Sem largura e
+   altura explicitas o navegador aplica o padrao de SVG, 300 por 150, e o
+   cartao ganha 150px de vao entre o numero e o nome. */
+.md-typeset .icon,
+.pure-mode-toggle .icon {
+  width: var(--text-20);
+  height: var(--text-20);
+  flex: none;
+}
+
+.md-typeset .icon-sm,
+.pure-mode-toggle .icon-sm {
+  width: var(--text-16);
+  height: var(--text-16);
+}
+
+/* A ancora de titulo so aparece quando o titulo recebe o ponteiro ou o foco:
+   visivel o tempo todo ela vira ruido ao lado de cada um dos vinte presets. */
+.md-typeset .headerlink {
+  opacity: 0;
+  transition: opacity var(--duration-3) var(--ease-out-soft);
+}
+
+.md-typeset :hover > .headerlink,
+.md-typeset .headerlink:focus-visible { opacity: 1; }
+
+/* O link do conteudo se anuncia por sublinhado, mas o cartao e uma superficie
+   inteira clicavel: nele o sublinhado atravessa quatro linhas de texto. */
+.md-typeset a:not(.md-button):not(.headerlink):not(.preset-row) {
+  text-decoration: underline;
+}
+
+.md-typeset a.preset-card,
+.md-typeset a.preset-card * { text-decoration: none; }
+
+/* O item ativo do sumario: fio a esquerda e superficie discreta. O bloco
+   preenchido com dois destaques ao mesmo tempo competia com o conteudo. */
+.md-nav__item .md-nav__link--active {
+  background: transparent;
+  box-shadow: inset 2px 0 0 var(--text);
+  border-radius: 0;
+}
+
+/* '--secondary' nao e cor de texto em modo nenhum: fica entre 2,6 e 4,3 sobre
+   a superficie, abaixo do piso de 4,5. E cor de borda. Texto pequeno e
+   metadado usam '--muted', e o sumario e feito dos dois. */
+.md-nav__link,
+.md-nav--secondary > .md-nav__list > .md-nav__item > .md-nav__link,
+.md-nav__link .md-ellipsis {
+  color: var(--muted);
+}
+
+.md-nav__link:hover,
+.md-nav__link:hover .md-ellipsis,
+.md-nav__link--active,
+.md-nav__link--active .md-ellipsis {
+  color: var(--text);
+}
+
+/* O botao de modo fecha a barra pela direita. */
+.pure-mode-toggle { margin-left: var(--space-8); }
+.md-header__inner > .pure-mode-toggle:last-child { margin-right: var(--space-8); }
+
+/* =========================================================================
+   Sumario da esquerda
+   Vinte presets numa coluna de 240px pedem hierarquia, nao so espaco: o
+   comando e o que se procura, a descricao so confirma a escolha.
+   ========================================================================= */
+.md-sidebar--primary .md-nav__list { padding-left: 0; }
+
+.md-nav__link {
+  padding: var(--space-4) var(--space-8);
+  border-radius: var(--radius-field);
+  line-height: var(--leading-snug);
+  transition: color var(--duration-5) var(--ease-out-soft),
+              background-color var(--duration-5) var(--ease-out-soft);
+}
+
+.md-nav__link:hover { background: var(--surface-hover); }
+
+/* Titulo de secao do sumario como eyebrow: mono, pequeno, com espacamento de
+   letra. E o mesmo rotulo de secao do site. */
+.md-nav--secondary > .md-nav__list > .md-nav__item > .md-nav__link {
+  font-family: var(--font-mono);
+  font-size: var(--text-11);
+  letter-spacing: var(--tracking-eyebrow);
+  margin-top: var(--space-16);
+}
+
+/* Item de preset: comando em mono na primeira linha, descricao truncada em
+   uma linha na segunda. O titulo traz o comando num <code>, entao no sumario
+   ele sai colado ao resto e as duas partes precisam ser separadas de novo. */
+.toc-preset .md-ellipsis { display: block; overflow: visible; }
+
+.toc-cmd {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: var(--text-12);
+  color: var(--text);
+}
+
+.toc-desc {
+  display: block;
+  font-size: var(--text-11);
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.md-nav__link--active .toc-cmd,
+.md-nav__link--active .toc-desc { color: var(--text); }
+
+/* A marca do item ativo e um fio a esquerda: numa lista de vinte itens o
+   bloco preenchido pesa mais que o conteudo. */
+.md-nav__item .md-nav__link--active {
+  background: transparent;
+  box-shadow: inset 2px 0 0 var(--text);
+  border-radius: 0;
+}
+
+/* '--secondary' nao e cor de texto em modo nenhum: fica entre 2,6 e 4,3 sobre
+   a superficie, abaixo do piso de 4,5. E cor de borda. */
+.md-nav__link,
+.md-nav--secondary > .md-nav__list > .md-nav__item > .md-nav__link,
+.md-nav__link .md-ellipsis { color: var(--muted); }
+
+.md-nav__link:hover,
+.md-nav__link:hover .md-ellipsis,
+.md-nav__link--active,
+.md-nav__link--active .md-ellipsis { color: var(--text); }
